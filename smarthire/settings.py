@@ -142,9 +142,21 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGIN_URL = 'login'
 
 # Celery Configuration Options
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
-CELERY_ACCEPT_CONTENT = ['application/json']
+
+CELERY_BROKER_URL = os.environ.get(
+    "CELERY_BROKER_URL",
+    "rediss://red-d7h11lpf9bms739ivjj0:D04fbvK7npVAjZJoDTL2LRrY356Adueb@oregon-keyvalue.render.com:6379"
+)
+
+CELERY_RESULT_BACKEND = os.environ.get(
+    "CELERY_RESULT_BACKEND",
+    "rediss://red-d7h11lpf9bms739ivjj0:D04fbvK7npVAjZJoDTL2LRrY356Adueb@oregon-keyvalue.render.com:6379"
+)
+
+CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
+
+# Required for Redis SSL (Render)
+CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": None}
+CELERY_RESULT_BACKEND_USE_SSL = {"ssl_cert_reqs": None}
