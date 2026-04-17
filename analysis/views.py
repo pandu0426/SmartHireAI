@@ -43,7 +43,7 @@ def job_match(request, resume_id):
             )
             
             from .tasks import process_job_match_task
-            process_job_match_task.delay(new_match.id)
+            process_job_match_task(new_match.id)
             
             from django.shortcuts import redirect
             return redirect('job_match', resume_id=resume.id)

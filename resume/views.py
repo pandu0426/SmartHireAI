@@ -24,8 +24,8 @@ def upload_resume(request):
             from analysis.models import AnalysisReport
             report = AnalysisReport.objects.create(resume=resume, status='processing')
             from analysis.tasks import process_resume_task
-            process_resume_task.delay(report.id)
-            messages.success(request, 'Resume uploaded successfully! Now analyzing in the background...')
+            process_resume_task(report.id)
+            messages.success(request, 'Resume uploaded and analyzed successfully!')
             # Provide an automatic redirect to analyze the resume immediately.
             # We haven't created the analysis view yet, but the URL will be 'analyze_resume'
             return redirect('analyze_resume', resume_id=resume.id)

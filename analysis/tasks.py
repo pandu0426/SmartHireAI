@@ -1,13 +1,11 @@
 import logging
-from celery import shared_task
 from resume.models import Resume
 from analysis.models import AnalysisReport, JobMatchResult
 from analysis.utils import extract_text_from_pdf, calculate_ats_score, extract_skills, match_job_description, generate_resume_feedback
 
 logger = logging.getLogger(__name__)
 
-@shared_task(bind=True)
-def process_resume_task(self, report_id):
+def process_resume_task(report_id):
     try:
         report = AnalysisReport.objects.select_related('resume').get(id=report_id)
     except AnalysisReport.DoesNotExist:
@@ -50,8 +48,7 @@ def process_resume_task(self, report_id):
         report.save(update_fields=['status', 'error_message'])
 
 
-@shared_task(bind=True)
-def process_job_match_task(self, job_match_id):
+def process_job_match_task(job_match_id):
     try:
         job_match = JobMatchResult.objects.select_related('resume__analysis').get(id=job_match_id)
     except JobMatchResult.DoesNotExist:
