@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHireAI - Professional Resume Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            /* Slate 900 for professional look */
+            --accent-color: #3b82f6;
+            /* Blue 500 for actions */
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--primary-color);
+        }
+
+        .text-accent {
+            color: var(--accent-color) !important;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--surface-color) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.8rem 0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.04em;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted) !important;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color) !important;
+        }
+
+        /* Minimalist Cards */
+        .card-custom {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .card-custom:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+
+        /* Clean Buttons */
+        .btn {
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e293b;
+            border-color: #1e293b;
+        }
+
+        .btn-accent {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #fff;
+        }
+
+        .btn-accent:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .btn-outline-secondary {
+            border-color: var(--border-color);
+            color: var(--text-main);
+            background-color: var(--surface-color);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        /* Clean Forms */
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: var(--surface-color);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin-bottom: 0.4rem;
+        }
+
+        /* Layout Helpers */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive Fixes */
+        @media (max-width: 768px) {
+            h1.display-3 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            .card-custom {
+                margin-bottom: 1rem;
+                padding: 1.5rem !important;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-outline-secondary {
+                margin-bottom: 0;
+            }
+
+            .navbar-nav .nav-item {
+                margin-top: 0.5rem;
+                text-align: center;
+            }
+
+            .navbar-collapse {
+                padding: 1rem 0;
+            }
+
+            .border-end {
+                border-right: none !important;
+                border-bottom: 1px solid var(--border-color) !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="bi bi-briefcase-fill me-2 text-accent"></i>SmartHire
+            </a>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1 text-dark"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item mx-1"><a class="nav-link" href="{% url 'dashboard' %}"><i
+                                class="bi bi-grid me-1"></i> Dashboard</a></li>
+                    <li class="nav-item mx-1"><a class="nav-link" href="{% url 'upload_resume' %}"><i
+                                class="bi bi-cloud-upload me-1"></i> Analyze Resume</a></li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item d-flex align-items-center">
+                        <span class="text-muted me-3 d-none d-lg-block"><i class="bi bi-person-circle me-1"></i> {{
+                            user.username }}</span>
+                        <form method="post" action="{% url 'logout' %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="btn btn-sm btn-outline-danger rounded-pill px-3">Logout</button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="nav-item mx-1">
+                        <a class="nav-link fw-bold" style="color:var(--text-main)" href="{% url 'login' %}">Log In</a>
+                    </li>
+                    <li class="nav-item mx-1">
+                        <a class="btn btn-primary rounded-pill px-4" href="{% url 'register' %}">Sign Up Free</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4 main-content animate-fade-in">
+        {% if messages %}
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055">
+            {% for message in messages %}
+            <div class="toast align-items-center text-bg-{{ message.tags }} border-0 show shadow-lg" role="alert"
+                aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-medium">
+                        {% if message.tags == 'success' %}<i class="bi bi-check-circle me-2"></i>{% endif %}
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="mt-auto py-4 bg-light border-top text-center mt-5">
+        <div class="container">
+            <p class="mb-2 text-muted fw-medium" style="font-size: 0.95rem;">
+                &copy; <span id="currentYear"></span> SmartHireAI | Developed by Md Tayyab
+            </p>
+            <div class="d-flex justify-content-center flex-wrap gap-3 mt-2">
+                <a href="https://www.linkedin.com/in/mohammad-tayyab-6ab214291?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                    target="_blank" rel="noopener noreferrer"
+                    class="text-muted text-decoration-none small transition-colors hover-accent"
+                    style="transition: color 0.2s ease;">
+                    <i class="bi bi-linkedin text-primary me-1"></i> LinkedIn
+                </a>
+                <span class="text-muted opacity-50 d-none d-sm-inline">|</span>
+                <a href="https://github.com/your-username" target="_blank" rel="noopener noreferrer"
+                    class="text-muted text-decoration-none small transition-colors hover-accent"
+                    style="transition: color 0.2s ease;">
+                    <i class="bi bi-github text-dark me-1"></i> GitHub
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

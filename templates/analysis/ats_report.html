@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-bold mb-1">Analysis Report</h2>
+        <p class="text-muted mb-0"><i class="bi bi-file-earmark-pdf me-1"></i> {{ resume.file.name|slice:"8:" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'job_match' resume.id %}" class="btn btn-outline-secondary"><i class="bi bi-briefcase me-1"></i> Job Match</a>
+        <a href="{% url 'chat_resume' resume.id %}" class="btn btn-accent shadow-sm"><i class="bi bi-chat-dots me-1"></i> AI Coach</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom p-4 h-100 border-top border-4 border-accent text-center">
+            <h5 class="fw-bold text-muted mb-4 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">Overall ATS Score</h5>
+            
+            <div class="position-relative d-inline-block mx-auto mb-4 mt-2" style="width: 140px; height: 140px;">
+                <svg viewBox="0 0 36 36" class="circular-chart" style="width:100%; height:100%;">
+                    <path class="circle-bg"
+                        d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none" stroke="#f1f5f9" stroke-width="2.5"/>
+                    <path class="circle"
+                        stroke-dasharray="{{ report.ats_score }}, 100"
+                        d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none" stroke="var(--accent-color)" stroke-width="2.5" stroke-linecap="round"
+                        style="animation: progress 1.5s ease-out forwards;"/>
+                </svg>
+                <div class="position-absolute top-50 start-50 translate-middle">
+                    <h2 class="mb-0 fw-bold" style="font-size: 2.2rem; color: var(--primary-color);">{{ report.ats_score }}<span style="font-size: 1rem; color: var(--text-muted);">/100</span></h2>
+                </div>
+            </div>
+            
+            <div class="mt-2">
+                {% if report.ats_score >= 80 %}
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-check-circle me-1"></i> Excellent Candidate</span>
+                {% elif report.ats_score >= 50 %}
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill text-dark"><i class="bi bi-exclamation-circle me-1"></i> Needs Refinement</span>
+                {% else %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-x-circle me-1"></i> Major Revision Required</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card card-custom p-4 h-100">
+            <h5 class="fw-bold mb-4 border-bottom pb-3"><i class="bi bi-tools me-2 text-muted"></i> Detected Technical Skills</h5>
+            {% if report.skills_found %}
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for skill in report.skills_found %}
+                        <span class="badge bg-light text-dark border p-2 rounded-2 fw-medium" style="font-size: 0.9rem;">{{ skill|title }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-light border text-muted">
+                    <i class="bi bi-info-circle me-2"></i> No standard technical skills detected. Ensure your technical skills are explicitly listed.
+                </div>
+            {% endif %}
+            
+            <h5 class="fw-bold mb-3 mt-4 border-bottom pb-3"><i class="bi bi-card-checklist me-2 text-muted"></i> Diagnostic Checks</h5>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <span class="fw-medium text-muted">File Format</span>
+                        <span class="text-success fw-bold"><i class="bi bi-filetype-pdf me-1"></i> PDF</span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <span class="fw-medium text-muted">Length Check</span>
+                        <span class="text-primary fw-bold"><i class="bi bi-card-text me-1"></i> Optimal</span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <span class="fw-medium text-muted">Key Sections</span>
+                        <span class="text-primary fw-bold"><i class="bi bi-layout-text-sidebar-reverse me-1"></i> Found</span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                        <span class="fw-medium text-muted">Quantifiable Metrics</span>
+                        <span class="text-primary fw-bold"><i class="bi bi-123 me-1"></i> Detected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

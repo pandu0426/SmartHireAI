@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="row justify-content-center" style="margin-top: 5vh; margin-bottom: 5vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card card-custom p-5">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus fs-1 text-accent mb-2"></i>
+                <h3 class="fw-bold">Create Account</h3>
+                <p class="text-muted small">Join SmartHire and analyze your resume</p>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary" type="submit">Sign Up</button>
+                </div>
+            </form>
+            <div class="mt-4 text-center">
+                <small class="text-muted">Already have an account? <a class="text-accent text-decoration-none fw-medium" href="{% url 'login' %}">Sign in</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

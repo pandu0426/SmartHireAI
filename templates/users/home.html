@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .hero-section {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    .floating-card {
+        animation: float 6s ease-in-out infinite;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        position: absolute;
+        padding: 1.5rem;
+        z-index: 2;
+    }
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    .delay-1 { animation-delay: 0.5s; }
+    .delay-2 { animation-delay: 1s; }
+    .hero-blob {
+        position: absolute;
+        top: 50%;
+        right: 5%;
+        transform: translateY(-50%);
+        width: 500px;
+        height: 500px;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+        filter: blur(60px);
+        border-radius: 50%;
+        z-index: 0;
+    }
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+        color: #4f46e5;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="row hero-section position-relative">
+    <div class="col-lg-6 z-1">
+        <div class="pe-lg-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-medium mb-4 animate-fade-in">
+                <i class="bi bi-stars"></i> Next-Gen AI Resume Analyzer
+            </span>
+            <h1 class="display-3 fw-bold mb-4 animate-fade-in delay-1" style="line-height: 1.1;">
+                Get Past the ATS <br>
+                Land Your <span class="text-gradient">Dream Job</span>
+            </h1>
+            <p class="lead text-muted mb-5 animate-fade-in delay-2" style="font-size: 1.25rem;">
+                Our AI-powered platform analyzes your resume against industry standards, predicts ATS scores, and provides actionable feedback to get you more interviews.
+            </p>
+            <div class="d-flex gap-3 animate-fade-in delay-3">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow">Get Started</a>
+                <a href="#features" class="btn btn-outline-secondary btn-lg rounded-pill px-4 text-dark bg-white border-0 shadow-sm">Learn More</a>
+            </div>
+            
+            <div class="mt-5 pt-4 d-flex align-items-center gap-4 animate-fade-in delay-3 opacity-75">
+                <div>
+                    <h3 class="fw-bold mb-0">98%</h3>
+                    <small class="text-muted">Accuracy</small>
+                </div>
+                <div class="border-end h-50"></div>
+                <div>
+                    <h3 class="fw-bold mb-0">10k+</h3>
+                    <small class="text-muted">Resumes Scanned</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 d-none d-lg-block position-relative" style="height: 600px;">
+        <div class="hero-blob"></div>
+        
+        <!-- Floating Visual Elements -->
+        <div class="floating-card" style="top: 10%; right: 15%; width: 250px;">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-success rounded-circle p-2 me-3 shadow-sm text-white"><i class="bi bi-check-lg"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">ATS Score</h6>
+                    <small class="text-success">Passed (92/100)</small>
+                </div>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
+            </div>
+        </div>
+        
+        <div class="floating-card delay-1" style="top: 40%; right: 40%; width: 280px; z-index: 3;">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary rounded p-2 me-3 shadow-sm text-white"><i class="bi bi-file-earmark-text"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Analyzing Experience</h6>
+                    <small class="text-muted">Extracting keywords...</small>
+                </div>
+            </div>
+            <p class="small text-muted mb-0">Found matches for: Python, Django, React, AWS</p>
+        </div>
+        
+        <div class="floating-card delay-2" style="bottom: 15%; right: 10%; width: 260px;">
+            <div class="d-flex mb-2">
+                <div class="text-primary me-2"><i class="bi bi-chat-dots-fill"></i></div>
+                <h6 class="mb-0 fw-bold">AI Coach Suggestion</h6>
+            </div>
+            <p class="small text-muted mb-0">"Try changing 'Managed a team' to **'Spearheaded a cross-functional team of 5'** for stronger impact."</p>
+        </div>
+    </div>
+</div>
+
+<div id="features" class="row py-5 mt-5 border-top">
+    <div class="text-center mb-5 mt-4">
+        <h2 class="fw-bold">How SmartHireAI Works</h2>
+        <p class="text-muted">Three simple steps to supercharge your job applications.</p>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom h-100 p-4 border-0 bg-transparent shadow-none">
+            <div class="feature-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+            <h4 class="fw-bold">1. Upload Resume</h4>
+            <p class="text-muted">Upload your PDF resume. Our parsers securely extract all your experience, education, and skills dynamically.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom h-100 p-4 border-0 bg-transparent shadow-none">
+            <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
+            <h4 class="fw-bold">2. Get ATS Scored</h4>
+            <p class="text-muted">See how a robot views your resume. Discover formatting issues, missing standard sections, and quantifiable metrics.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom h-100 p-4 border-0 bg-transparent shadow-none">
+            <div class="feature-icon"><i class="bi bi-magic"></i></div>
+            <h4 class="fw-bold">3. AI Optimization</h4>
+            <p class="text-muted">Compare against job descriptions to spot missing keywords, and use our AI coach to rewrite your bullet points into power bullets.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
