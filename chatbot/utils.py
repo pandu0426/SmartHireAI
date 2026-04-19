@@ -130,14 +130,20 @@ def fallback_intelligent_response(message, resume_text=None):
         return f"I'm still learning how to answer that specific question, but here's a helpful tip: {tip}\n\nYou can ask me to 'improve your resume', 'recommend skills', or 'rewrite a sentence'!"
 
 def generate_ai_response(user_input, resume_text, job_description):
+    print("Gemini started")
     import google.generativeai as genai
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
+        print("Gemini failed: GEMINI_API_KEY is missing or not set")
         return None
         
+    # Ensure inputs are never None to avoid TypeError in string formatting
+    safe_resume_text = resume_text or ""
+    safe_job_desc = job_description or ""
+        
     genai.configure(api_key=api_key)
-    # Use gemini-1.5-flash which is the standard fast & cost-effective text model
+    # Use gemini-1.5-flash-latest for robust text generation
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
     
     prompt = f"""
@@ -153,15 +159,17 @@ def generate_ai_response(user_input, resume_text, job_description):
 
     User's Message: {user_input}
     
-    Job Description: {job_description if job_description else 'Not provided'}
+    Job Description: {safe_job_desc if safe_job_desc else 'Not provided'}
     
-    Resume Text Context (first 1500 chars to save tokens): {resume_text[:1500] if resume_text else 'Not provided'}
+    Resume Text Context (first 1500 chars to save tokens): {safe_resume_text[:1500] if safe_resume_text else 'Not provided'}
     """
     
     response = model.generate_content(prompt)
     if not response or not hasattr(response, 'text') or not response.text:
+        print("Gemini failed: Valid response.text not found in API response")
         return None
         
+    print("Gemini success")
     return response.text
 
 def generate_intelligent_response(message, resume_text=None, job_description=None):
@@ -171,8 +179,9 @@ def generate_intelligent_response(message, resume_text=None, job_description=Non
             if ai_text:
                 return ai_text
         except Exception as e:
-            # Silently fallback
-            print(f"AI Coach Error: {e}")
+            # Silently fallback but log in backend
+            print(f"Gemini failed: {e}")
             pass
             
+    print("Fallback used")
     return fallback_intelligent_response(message, resume_text)
