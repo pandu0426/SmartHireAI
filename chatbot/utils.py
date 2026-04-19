@@ -1,5 +1,7 @@
 import re
 import random
+import os
+from django.conf import settings
 
 # Predefined Knowledge Base
 KNOWLEDGE_BASE = {
@@ -77,7 +79,7 @@ def process_rewrite(message):
         
     return f"Here is a more impactful way to phrase that: **'Successfully executed initiatives related to {text}, consistently exceeding performance benchmarks.'**"
 
-def generate_intelligent_response(message, resume_text=None):
+def fallback_intelligent_response(message, resume_text=None):
     """
     Response engine that uses intent recognition to provide structured answers.
     """
@@ -126,3 +128,51 @@ def generate_intelligent_response(message, resume_text=None):
         # Fallback response
         tip = random.choice(KNOWLEDGE_BASE['resume_tips'])
         return f"I'm still learning how to answer that specific question, but here's a helpful tip: {tip}\n\nYou can ask me to 'improve your resume', 'recommend skills', or 'rewrite a sentence'!"
+
+def generate_ai_response(user_input, resume_text, job_description):
+    import google.generativeai as genai
+    
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+        
+    genai.configure(api_key=api_key)
+    # Use gemini-1.5-flash which is the standard fast & cost-effective text model
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = f"""
+    You are a professional AI Resume Coach.
+    Analyze the following resume and job description (if provided).
+    Provide clear, concise advice in 5-7 bullet points maximum.
+    Ensure responses are:
+    - Professional
+    - Actionable
+    - Resume-focused
+    
+    Format your response cleanly in markdown.
+
+    User's Message: {user_input}
+    
+    Job Description: {job_description if job_description else 'Not provided'}
+    
+    Resume Text Context (first 1500 chars to save tokens): {resume_text[:1500] if resume_text else 'Not provided'}
+    """
+    
+    response = model.generate_content(prompt)
+    if not response or not hasattr(response, 'text') or not response.text:
+        return None
+        
+    return response.text
+
+def generate_intelligent_response(message, resume_text=None, job_description=None):
+    if settings.ENABLE_AI_COACH:
+        try:
+            ai_text = generate_ai_response(message, resume_text, job_description)
+            if ai_text:
+                return ai_text
+        except Exception as e:
+            # Silently fallback
+            print(f"AI Coach Error: {e}")
+            pass
+            
+    return fallback_intelligent_response(message, resume_text)

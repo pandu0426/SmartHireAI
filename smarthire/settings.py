@@ -140,4 +140,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGIN_URL = 'login'
+
+# Feature flags for safe AI/ML upgrades
+ENABLE_SEMANTIC_MATCHING = os.environ.get('ENABLE_SEMANTIC_MATCHING', 'False') == 'True'
+ENABLE_AI_COACH = os.environ.get('ENABLE_AI_COACH', 'False') == 'True'
+ENABLE_ADVANCED_PARSING = os.environ.get('ENABLE_ADVANCED_PARSING', 'False') == 'True'
 

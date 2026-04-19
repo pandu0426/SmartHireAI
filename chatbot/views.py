@@ -27,8 +27,13 @@ def chat_resume(request, resume_id):
             # Add user message
             chat_history.append({'role': 'user', 'content': user_message})
             
+            # Get job description if exists
+            from analysis.models import JobMatchResult
+            latest_match = JobMatchResult.objects.filter(resume=resume).order_by('-created_at').first()
+            job_description = latest_match.job_description if latest_match else None
+
             # Generate intelligent response
-            bot_response = generate_intelligent_response(user_message, resume_text)
+            bot_response = generate_intelligent_response(user_message, resume_text, job_description)
             chat_history.append({'role': 'assistant', 'content': bot_response})
             
             # Save to session
