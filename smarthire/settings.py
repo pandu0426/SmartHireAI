@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (local dev)
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -143,6 +147,6 @@ LOGIN_URL = 'login'
 
 # Feature flags for safe AI/ML upgrades
 ENABLE_SEMANTIC_MATCHING = os.environ.get('ENABLE_SEMANTIC_MATCHING', 'false').lower() == 'true'
-ENABLE_AI_COACH = os.environ.get('ENABLE_AI_COACH', 'false').lower() == 'true'
+ENABLE_AI_COACH = os.environ.get('ENABLE_AI_COACH', 'true').lower() == 'true'
 ENABLE_ADVANCED_PARSING = os.environ.get('ENABLE_ADVANCED_PARSING', 'false').lower() == 'true'
 
