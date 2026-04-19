@@ -138,7 +138,7 @@ def generate_ai_response(user_input, resume_text, job_description):
         
     genai.configure(api_key=api_key)
     # Use gemini-1.5-flash which is the standard fast & cost-effective text model
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
     
     prompt = f"""
     You are a professional AI Resume Coach.
