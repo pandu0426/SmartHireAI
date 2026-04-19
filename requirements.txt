@@ -4,5 +4,5 @@ django-crispy-forms==2.1
 crispy-bootstrap5==2024.2
 gunicorn==21.2.0
 reportlab==4.0.9
-google-generativeai
+google-genai
 python-dotenv

@@ -131,7 +131,6 @@ def fallback_intelligent_response(message, resume_text=None):
 
 def generate_ai_response(user_input, resume_text, job_description):
     print("Gemini started")
-    import google.generativeai as genai
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -141,36 +140,63 @@ def generate_ai_response(user_input, resume_text, job_description):
     # Ensure inputs are never None to avoid TypeError in string formatting
     safe_resume_text = resume_text or ""
     safe_job_desc = job_description or ""
-        
-    genai.configure(api_key=api_key)
-    # Use gemini-1.5-flash-latest for robust text generation
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    
-    prompt = f"""
-    You are a professional AI Resume Coach.
-    Analyze the following resume and job description (if provided).
-    Provide clear, concise advice in 5-7 bullet points maximum.
-    Ensure responses are:
-    - Professional
-    - Actionable
-    - Resume-focused
-    
-    Format your response cleanly in markdown.
 
-    User's Message: {user_input}
-    
-    Job Description: {safe_job_desc if safe_job_desc else 'Not provided'}
-    
-    Resume Text Context (first 1500 chars to save tokens): {safe_resume_text[:1500] if safe_resume_text else 'Not provided'}
-    """
-    
-    response = model.generate_content(prompt)
-    if not response or not hasattr(response, 'text') or not response.text:
-        print("Gemini failed: Valid response.text not found in API response")
-        return None
-        
-    print("Gemini success")
-    return response.text
+    try:
+        from google import genai
+        client = genai.Client(api_key=api_key)
+    except ImportError:
+        # Fallback to legacy library if new SDK not installed
+        import google.generativeai as genai_legacy
+        genai_legacy.configure(api_key=api_key)
+        model = genai_legacy.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(
+            f"""You are a professional AI Resume Coach.
+Analyze the following resume and job description (if provided).
+Provide clear, concise advice in 5-7 bullet points maximum.
+Ensure responses are professional, actionable, and resume-focused.
+Format your response cleanly in markdown.
+
+User's Message: {user_input}
+
+Job Description: {safe_job_desc if safe_job_desc else 'Not provided'}
+
+Resume Text Context (first 1500 chars): {safe_resume_text[:1500] if safe_resume_text else 'Not provided'}"""
+        )
+        if not response or not hasattr(response, 'text') or not response.text:
+            print("Gemini failed: Valid response.text not found")
+            return None
+        print("Gemini success (legacy SDK)")
+        return response.text
+
+    prompt = f"""You are a professional AI Resume Coach.
+Analyze the following resume and job description (if provided).
+Provide clear, concise advice in 5-7 bullet points maximum.
+Ensure responses are professional, actionable, and resume-focused.
+Format your response cleanly in markdown.
+
+User's Message: {user_input}
+
+Job Description: {safe_job_desc if safe_job_desc else 'Not provided'}
+
+Resume Text Context (first 1500 chars): {safe_resume_text[:1500] if safe_resume_text else 'Not provided'}"""
+
+    # Try models in order of preference (lite first = more free-tier quota)
+    models_to_try = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
+    for model_name in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
+            if response and response.text:
+                print(f"Gemini success (model: {model_name})")
+                return response.text
+        except Exception as model_err:
+            print(f"Gemini model {model_name} failed: {model_err}")
+            continue
+
+    print("Gemini failed: All models exhausted")
+    return None
 
 def generate_intelligent_response(message, resume_text=None, job_description=None):
     if settings.ENABLE_AI_COACH:
