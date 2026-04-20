@@ -34,13 +34,47 @@ KNOWLEDGE_BASE = {
         "Data Engineering (SQL, Snowflake, dbt, Pandas) — highly paid niche.",
         "Full-Stack (React, Node.js, Django, FastAPI) — versatile and in-demand.",
         "DevOps & CI/CD (Docker, Kubernetes, GitHub Actions) — every team needs it."
+    ],
+    'salary': {
+        'devops engineer':       {'pk': '80K–180K PKR/mo', 'uae': '$3,000–$6,000/mo', 'us': '$110K–$150K/yr'},
+        'software engineer':     {'pk': '70K–160K PKR/mo', 'uae': '$2,500–$5,500/mo', 'us': '$100K–$140K/yr'},
+        'frontend developer':    {'pk': '60K–130K PKR/mo', 'uae': '$2,000–$4,500/mo', 'us': '$85K–$120K/yr'},
+        'backend developer':     {'pk': '70K–150K PKR/mo', 'uae': '$2,500–$5,000/mo', 'us': '$95K–$135K/yr'},
+        'full stack developer':  {'pk': '80K–170K PKR/mo', 'uae': '$3,000–$6,000/mo', 'us': '$100K–$145K/yr'},
+        'data engineer':         {'pk': '90K–200K PKR/mo', 'uae': '$3,500–$7,000/mo', 'us': '$115K–$155K/yr'},
+        'data scientist':        {'pk': '90K–200K PKR/mo', 'uae': '$3,500–$7,500/mo', 'us': '$115K–$160K/yr'},
+        'ml engineer':           {'pk': '100K–220K PKR/mo', 'uae': '$4,000–$8,000/mo', 'us': '$130K–$180K/yr'},
+        'cloud engineer':        {'pk': '90K–190K PKR/mo', 'uae': '$3,500–$7,000/mo', 'us': '$115K–$155K/yr'},
+        'default':               {'pk': '60K–150K PKR/mo', 'uae': '$2,500–$5,500/mo', 'us': '$90K–$130K/yr'},
+    },
+    'devops_interview_questions': [
+        {
+            'q': 'Walk me through how you would design a CI/CD pipeline from scratch.',
+            'tip': 'Cover: source control (Git) → build (Jenkins/GitHub Actions) → test (unit + integration) → artifact registry → deploy (Kubernetes/ECS). Mention rollback strategy.'
+        },
+        {
+            'q': 'A production deployment failed at 2am. Walk me through your incident response.',
+            'tip': 'STAR format: detect via alerts (CloudWatch/Grafana) → rollback immediately → root-cause analysis → post-mortem with preventive measures. Never blame team members.'
+        },
+        {
+            'q': 'How do you manage secrets and credentials in a containerised environment?',
+            'tip': 'Mention: Kubernetes Secrets + encryption at rest, HashiCorp Vault or AWS Secrets Manager, never hardcoding in Dockerfiles or env files.'
+        },
+        {
+            'q': 'What is the difference between blue-green and canary deployments?',
+            'tip': 'Blue-green: two identical envs, instant switch. Canary: gradual traffic shift (5% → 25% → 100%) to reduce blast radius. Know when to use each.'
+        },
+        {
+            'q': 'How would you reduce a Docker image size by 60%?',
+            'tip': 'Multi-stage builds, alpine base images, .dockerignore, removing dev dependencies, layer caching optimisation, and using distroless images.'
+        },
     ]
 }
 
 # ---------------------------------------------------------------------------
 # Response Post-Processing
 # ---------------------------------------------------------------------------
-def _trim_response(text, max_chars=800):
+def _trim_response(text, max_chars=1800):
     """
     Safely trim AI response to max_chars by cutting at the last full sentence.
     Preserves bullet-point structure. Returns the trimmed string.
@@ -53,10 +87,9 @@ def _trim_response(text, max_chars=800):
 
     # Cut at last sentence boundary within limit
     chunk = text[:max_chars]
-    # Try to cut at last bullet point or sentence end
     for sep in ['\n', '. ', '! ', '? ']:
         idx = chunk.rfind(sep)
-        if idx > max_chars * 0.5:  # don't cut too early
+        if idx > max_chars * 0.5:
             return chunk[:idx + len(sep)].strip()
 
     return chunk.strip()
@@ -93,53 +126,74 @@ def generate_ai_response(user_input, resume_text, job_description, chat_history=
     # -----------------------------------------------------------------------
     if is_rewrite:
         mode_instruction = (
-            "The user wants their sentence/bullet rewritten.\n"
-            "Return ONLY the improved sentence — no explanation, no preamble.\n"
-            "Make it: concise, metric-driven, action-verb led, ATS-optimised.\n"
-            "Example output: 'Built and shipped a REST API reducing response latency by 40%.'"
+            "The user wants a sentence or bullet point rewritten.\n"
+            "- Return the rewritten bullet(s) first.\n"
+            "- Then briefly explain the 1-2 changes you made and why (e.g., added metric, stronger verb).\n"
+            "- Keep total response under 6 lines.\n"
+            "- Make it: action-verb led, metric-driven, ATS-keyword optimised."
         )
     elif safe_job:
         mode_instruction = (
-            "A job description is provided. Your job:\n"
-            "1. Identify how well the candidate matches this role (give a % estimate).\n"
-            "2. Name the top 1-2 missing skills or keywords from their resume vs. the JD.\n"
-            "3. Give one concrete action they can take TODAY to improve their chances.\n"
-            "Be decisive. If they ask 'should I apply?' — tell them yes or no and why."
+            "A job description is provided. Structure your answer as:\n"
+            "1. **Match assessment** — give a clear % with reasoning.\n"
+            "2. **Strengths** — 2-3 things in their profile that align well.\n"
+            "3. **Gaps** — specific skills/keywords missing from their resume vs. the JD.\n"
+            "4. **Action plan** — 2-3 concrete steps to maximise their chances before applying.\n"
+            "Be decisive and specific. Reference actual content from their resume and the JD."
         )
     else:
         mode_instruction = (
-            "No job description provided. Focus on:\n"
-            "- ATS optimisation and resume quality\n"
-            "- Career strategy and positioning\n"
-            "- Skill gaps and market relevance\n"
-            "Reference specific details from their resume when giving advice."
+            "No job description provided. Structure your answer appropriately for the question:\n"
+            "- For resume reviews: section-by-section feedback with specific fixes.\n"
+            "- For skill questions: ranked list with context (why it matters, how to learn it).\n"
+            "- For career advice: clear steps with reasoning.\n"
+            "- For interview prep: specific questions + frameworks + example answers.\n"
+            "Always reference specific content from their resume when it's available."
         )
 
-    system_prompt = """You are a Senior Technical Recruiter with 10+ years of experience placing candidates at FAANG companies, top startups, and Fortune 500 firms. You are also a certified career strategist who charges $300/hr for resume reviews.
+    system_prompt = """You are a Senior Technical Recruiter and Career Strategist with 10+ years of experience placing candidates at FAANG companies, top-tier startups, and Fortune 500 firms. You have reviewed thousands of resumes, conducted hundreds of interviews, and coached professionals at all levels.
 
-YOUR COMMUNICATION RULES (NON-NEGOTIABLE):
-- Reply in EITHER: max 3–5 bullet points, OR max 2–3 short sentences. NEVER both. NEVER long paragraphs.
-- Be direct and specific. No motivational fluff. No filler phrases like "Great question!" or "Absolutely!".
-- Lead with the most important insight first.
-- Use action verbs and metrics whenever possible.
-- If you don't have enough context, ask ONE targeted question.
-- NEVER repeat the user's question back to them.
-- NEVER give generic advice that any chatbot would give.
+YOUR PERSONA:
+- You are direct, professional, and highly specific — like a $300/hr career coach
+- You never waste words, but you never under-deliver either
+- You give the same level of analysis you'd give a paying client
+- You reference the actual resume content, not generic templates
+- You speak like a recruiter who has seen every mistake and knows exactly what hiring managers look for
 
-YOUR EXPERTISE:
-- ATS keyword optimisation and formatting rules
-- Resume bullet rewriting with quantified impact
-- LinkedIn headline and summary optimisation
-- Salary benchmarking and offer negotiation
-- Identifying red flags in job descriptions
-- Interview preparation with company-specific patterns
-- Career gap framing and narrative building
-- Role transition strategy (e.g., from engineer to PM)
+RESPONSE FORMAT RULES:
+- NO filler phrases: no "Great question!", "Absolutely!", "Of course!", "Certainly!"
+- NO vague advice like "improve your resume" or "network more"
+- DO use: bold headers, numbered lists, bullet points — structure makes you readable
+- DO give specific, actionable steps with reasoning
+- Match response LENGTH to the complexity of the question:
+  * Simple yes/no question → 2-4 sentences with clear verdict
+  * Analysis request (resume review, ATS check, skill gaps) → structured breakdown with sections
+  * Rewrite request → improved version + brief rationale
+  * Strategy question → numbered action plan
+- NEVER give a one-sentence answer to a complex question
+- NEVER write walls of text — use headers and bullets
 
-CURRENT MODE:
+CRITICAL CONVERSATION RULES:
+- ALWAYS read the full conversation history before responding — the current message may be a short follow-up (e.g., "devops engineer") answering a question you just asked
+- NEVER ask the candidate a question and then give zero advice — always give your best answer WITH the available context, then optionally invite more details
+- If context is missing, state your assumption explicitly and proceed: "Assuming you're targeting a mid-level DevOps role..."
+- NEVER respond to a follow-up message as if it were a new standalone question — honour the conversation thread
+- If the user gives a short reply (role name, city, number), use it to complete your previous answer immediately
+
+YOUR AREAS OF DEEP EXPERTISE:
+- ATS optimisation: keyword density, formatting, section headers, file types
+- Resume bullet writing: XYZ formula, action verbs, quantified impact
+- LinkedIn optimisation: headline, summary, featured section
+- Job market intelligence: salary benchmarks, in-demand skills, hiring trends
+- Job description red flag detection: toxic cultures, unrealistic expectations
+- Interview preparation: STAR method, technical rounds, case studies, salary negotiation
+- Career gap framing: how to position breaks, freelance, or pivots positively
+- Role transitions: how to position transferable skills for new industries
+
+CURRENT CONTEXT MODE:
 {mode}
 
-CANDIDATE RESUME (first 2000 chars):
+CANDIDATE RESUME (extracted text, up to 2500 chars):
 \"\"\"
 {resume}
 \"\"\"
@@ -150,14 +204,14 @@ TARGET JOB DESCRIPTION:
 \"\"\"
 """.format(
         mode=mode_instruction,
-        resume=safe_resume[:2000] if safe_resume else "Not uploaded — give general advice based on the conversation.",
-        job_desc=safe_job[:1000] if safe_job else "Not provided."
+        resume=safe_resume[:2500] if safe_resume else "Not uploaded yet — give advice based on the conversation context.",
+        job_desc=safe_job[:1200] if safe_job else "Not provided — give general career/resume advice."
     )
 
-    # Build conversation history (last 8 turns to stay within context)
+    # Build conversation history (last 14 turns — more context for short follow-up replies)
     history_text = ""
     if chat_history:
-        recent = chat_history[-8:]
+        recent = chat_history[-14:]
         for msg in recent:
             role = "Candidate" if msg['role'] == 'user' else "Recruiter"
             history_text += f"{role}: {msg['content']}\n\n"
@@ -169,11 +223,11 @@ TARGET JOB DESCRIPTION:
         f"Recruiter:"
     )
 
-    # Generation config — hard cap on token output
+    # Generation config — balanced: enough tokens for professional depth, not runaway
     generation_config = {
-        "max_output_tokens": 250,
-        "temperature": 0.5,
-        "top_p": 0.9,
+        "max_output_tokens": 600,
+        "temperature": 0.65,
+        "top_p": 0.92,
     }
 
     try:
@@ -216,8 +270,8 @@ TARGET JOB DESCRIPTION:
             response = model.generate_content(
                 full_prompt,
                 generation_config=GenerationConfig(
-                    max_output_tokens=250,
-                    temperature=0.5,
+                    max_output_tokens=600,
+                    temperature=0.65,
                 )
             )
             if response and hasattr(response, 'text') and response.text and response.text.strip():
@@ -236,16 +290,25 @@ TARGET JOB DESCRIPTION:
 # ---------------------------------------------------------------------------
 # Fallback rule-based engine (when Gemini is unavailable)
 # ---------------------------------------------------------------------------
-def analyze_intent(message):
-    """Categorises the user's message using keyword-based logic."""
+# Common role names used to detect job-role context in short follow-up messages
+ROLE_KEYWORDS = [
+    'devops', 'developer', 'engineer', 'data scientist', 'ml engineer', 'cloud engineer',
+    'backend', 'frontend', 'full stack', 'software', 'qa', 'tester', 'pm', 'product manager',
+    'analyst', 'architect', 'sre', 'site reliability'
+]
+
+def analyze_intent(message, chat_history=None):
+    """Categorises the user's message using keyword-based logic.
+    Accepts optional chat_history to detect follow-up messages."""
     msg = message.lower()
     intent_keywords = {
-        'resume_improvement': ['improve', 'resume', 'cv', 'better', 'fix', 'format', 'ats'],
-        'skills_recommendation': ['skill', 'learn', 'trending', 'technology', 'stack'],
-        'job_search': ['job', 'apply', 'search', 'hire', 'find', 'roadmap', 'should i apply'],
-        'interview': ['interview', 'prepare', 'questions', 'star', 'behavioral'],
-        'rewrite': ['rewrite', 'improve this', 'fix this', 'reword', 'rephrase'],
-        'project': ['project', 'working on', 'building', 'developing', 'created', 'built']
+        'resume_improvement': ['improve', 'resume', 'cv', 'better', 'fix', 'format', 'ats', 'ats-ready'],
+        'skills_recommendation': ['skill', 'learn', 'trending', 'technology', 'stack', 'missing skills', 'what skills'],
+        'job_search': ['job', 'apply', 'search', 'hire', 'find', 'roadmap', 'should i apply', 'application'],
+        'interview': ['interview', 'prepare', 'questions', 'star', 'behavioral', 'tough question'],
+        'salary': ['salary', 'pay', 'compensation', 'ctc', 'package', 'earn', 'income', 'wage', 'how much'],
+        'rewrite': ['rewrite', 'improve this', 'fix this', 'reword', 'rephrase', 'make this better'],
+        'project': ['project', 'working on', 'building', 'developing', 'created', 'built', 'weather', 'api'],
     }
     best_intent = 'unknown'
     max_matches = 0
@@ -254,7 +317,38 @@ def analyze_intent(message):
         if matches > max_matches:
             max_matches = matches
             best_intent = intent
+
+    # If message is a short follow-up (role name like "devops engineer"),
+    # try to inherit intent from the last recruiter message
+    if best_intent == 'unknown' and len(msg.split()) <= 4 and chat_history:
+        last_recruiter = next(
+            (m['content'].lower() for m in reversed(chat_history) if m['role'] == 'assistant'),
+            ''
+        )
+        if any(w in last_recruiter for w in ['salary', 'pay', 'compensation', 'earn']):
+            best_intent = 'salary'
+        elif any(w in last_recruiter for w in ['interview', 'question', 'prepare']):
+            best_intent = 'interview'
+        elif any(w in last_recruiter for w in ['skill', 'learn', 'missing']):
+            best_intent = 'skills_recommendation'
+
     return best_intent
+
+
+def _extract_role_from_context(message, chat_history=None):
+    """Extract a job role from the current message or recent chat history."""
+    combined = message.lower()
+    if chat_history:
+        for m in reversed(chat_history[-6:]):
+            combined += ' ' + m['content'].lower()
+    for role in KNOWLEDGE_BASE['salary']:
+        if role != 'default' and role in combined:
+            return role
+    # Check generic role keywords
+    for kw in ROLE_KEYWORDS:
+        if kw in combined:
+            return kw + ' engineer' if 'engineer' not in kw else kw
+    return 'default'
 
 
 def process_rewrite(message):
@@ -279,66 +373,117 @@ def process_rewrite(message):
     return f"**Rewrite:** Successfully delivered {text}, achieving measurable improvements in efficiency and stakeholder satisfaction."
 
 
-def fallback_intelligent_response(message, resume_text=None):
+def fallback_intelligent_response(message, resume_text=None, chat_history=None):
     """
     Rule-based fallback — only used when Gemini is completely unavailable.
-    Kept intentionally lean and recruiter-toned.
+    Context-aware: uses chat_history to handle short follow-up messages correctly.
     """
-    intent = analyze_intent(message)
+    intent = analyze_intent(message, chat_history)
     msg_lower = message.lower()
 
     if intent == 'rewrite' or _is_rewrite_request(message):
         return process_rewrite(message)
 
-    if intent == 'project':
+    if intent == 'salary':
+        role = _extract_role_from_context(message, chat_history)
+        rates = KNOWLEDGE_BASE['salary'].get(role, KNOWLEDGE_BASE['salary']['default'])
+        role_label = role.title() if role != 'default' else 'Tech'
         return (
-            "To showcase this project effectively:\n\n"
-            "- **Add it to a Projects section** with: name, tech stack, and measurable outcome.\n"
-            "- **Quantify the impact** — e.g., 'Handles 1K+ requests/min' or 'Reduced load time by 40%'.\n"
-            "- **Link to the GitHub repo** so recruiters can verify your work."
+            f"**{role_label} Salary Benchmarks (2024)**\n\n"
+            f"- 🇵🇰 **Pakistan:** {rates['pk']}\n"
+            f"- 🇦🇪 **UAE/Gulf:** {rates['uae']}\n"
+            f"- 🇺🇸 **USA/Remote:** {rates['us']}\n\n"
+            "**Negotiation tips:**\n"
+            "- Always give a range, never a single number\n"
+            "- Anchor 10–15% above your actual target\n"
+            "- Research company-specific ranges on Glassdoor and LinkedIn Salary before negotiating"
+        )
+
+    if intent == 'project':
+        # Extract project name if user mentioned one
+        project_name = ''
+        for m in (chat_history or [])[-4:]:
+            match = re.search(r'(?:called|named|project)\s+([\w\s]+?)(?:using|with|$)', m['content'], re.I)
+            if match:
+                project_name = match.group(1).strip()
+                break
+        label = f'**{project_name}**' if project_name else 'your project'
+        return (
+            f"Here's how to position {label} to impress recruiters:\n\n"
+            "**1. Write a strong project bullet (XYZ formula):**\n"
+            "→ *Built [what] using [tech], resulting in [measurable outcome]*\n\n"
+            "**2. Add a dedicated Projects section with:**\n"
+            "- Project name + one-line description\n"
+            "- Tech stack (all tools/languages used)\n"
+            "- GitHub link + live demo link (if any)\n"
+            "- Quantified impact (users, performance gain, uptime, etc.)\n\n"
+            "**3. Frame it as real experience** — describe the problem it solves, not just what it does."
         )
 
     if intent == 'resume_improvement':
         tips = random.sample(KNOWLEDGE_BASE['resume_tips'], 3)
-        response = "Top 3 ATS improvements for your resume:\n\n"
+        response = "**Top ATS improvements for your resume:**\n\n"
         for tip in tips:
             response += f"- {tip}\n"
         if resume_text:
             word_count = len(resume_text.split())
             if word_count < 200:
-                response += "\n⚠️ *Resume is too thin — flesh out your experience sections.*"
+                response += "\n⚠️ *Resume is too thin — flesh out your experience and project sections.*"
             elif word_count > 1000:
-                response += "\n⚠️ *Resume is too long — cut to your top 5 most impactful bullets.*"
+                response += "\n⚠️ *Resume may be too long — prioritise your top 5 highest-impact bullets.*"
         return response
 
     if intent == 'skills_recommendation':
-        response = "Top in-demand skills right now:\n\n"
-        for skill in KNOWLEDGE_BASE['trending_skills'][:4]:
+        # Check if a DevOps role is in context
+        context_text = message + ' '.join(m['content'] for m in (chat_history or [])[-4:])
+        if 'devops' in context_text.lower():
+            return (
+                "**Top skills to add for DevOps roles (by priority):**\n\n"
+                "1. **Kubernetes** — container orchestration, expected at every mid+ level role\n"
+                "2. **Terraform / IaC** — infrastructure-as-code is now standard, not optional\n"
+                "3. **CI/CD pipelines** — GitHub Actions, Jenkins, or GitLab CI hands-on experience\n"
+                "4. **Linux & Bash scripting** — still the #1 skill screened in DevOps interviews\n"
+                "5. **Cloud platform** (AWS/Azure/GCP) — at least one certification strengthens your profile\n\n"
+                "*Add each with a concrete example: what you built, what it automated, what it saved.*"
+            )
+        response = "**Top in-demand skills right now:**\n\n"
+        for skill in KNOWLEDGE_BASE['trending_skills']:
             response += f"- {skill}\n"
-        if resume_text and "python" not in resume_text.lower():
-            response += "\n*Python isn't on your resume — it's the #1 requested skill in tech.*"
+        if resume_text and 'python' not in resume_text.lower():
+            response += "\n*Python isn't on your resume — it's the #1 requested skill across tech roles.*"
         return response
 
     if intent == 'job_search':
         return (
-            "Job search priorities:\n\n"
-            "- Optimise LinkedIn headline to match your target role title.\n"
-            "- Apply to 5–10 roles/day; spend equal time on networking.\n"
-            "- Follow up with hiring managers 5 business days after submitting."
+            "**Job search action plan:**\n\n"
+            "1. **LinkedIn headline** — update it to match your exact target role title\n"
+            "2. **Apply + network** — for every 5 applications, send 1 direct outreach to a recruiter/EM\n"
+            "3. **Tailor each application** — paste 5 exact keywords from the JD into your resume\n"
+            "4. **Follow up** — send a polite follow-up 5 business days after submitting\n"
+            "5. **Track everything** — use a spreadsheet: company, role, date, status, contact"
         )
 
     if intent == 'interview':
+        # Check if DevOps role mentioned in context
+        context_text = message + ' '.join(m['content'] for m in (chat_history or [])[-6:])
+        if 'devops' in context_text.lower():
+            questions = random.sample(KNOWLEDGE_BASE['devops_interview_questions'], 3)
+            response = "**3 tough DevOps interview questions + how to answer:**\n\n"
+            for i, item in enumerate(questions, 1):
+                response += f"**Q{i}: {item['q']}**\n"
+                response += f"💡 *{item['tip']}*\n\n"
+            return response.strip()
         tips = random.sample(KNOWLEDGE_BASE['interview_prep'], 3)
-        response = "Key interview tactics:\n\n"
+        response = "**Key interview tactics:**\n\n"
         for tip in tips:
             response += f"- {tip}\n"
         return response
 
-    # Generic fallback
-    tip = random.choice(KNOWLEDGE_BASE['resume_tips'])
+    # Context-aware generic fallback — never a random resume tip
     return (
-        f"Quick tip: *{tip}*\n\n"
-        "Ask me anything — resume rewrites, job match analysis, interview prep, or salary benchmarking."
+        "I can help you with: resume review, ATS optimisation, skill gap analysis, "
+        "interview prep, salary benchmarking, or bullet rewrites.\n\n"
+        "What would you like to focus on?"
     )
 
 
@@ -348,7 +493,7 @@ def fallback_intelligent_response(message, resume_text=None):
 def generate_intelligent_response(message, resume_text=None, job_description=None, chat_history=None):
     """
     Primary entry point. Tries Gemini first with recruiter persona.
-    Falls back to rule-based engine if Gemini fails for any reason.
+    Falls back to context-aware rule-based engine if Gemini fails.
     Always returns a non-empty string.
     """
     if settings.ENABLE_AI_COACH:
@@ -360,4 +505,5 @@ def generate_intelligent_response(message, resume_text=None, job_description=Non
             print(f"Gemini failed unexpectedly: {e}")
 
     print("Fallback used")
-    return fallback_intelligent_response(message, resume_text)
+    # Pass chat_history to fallback so short follow-ups get correct context
+    return fallback_intelligent_response(message, resume_text, chat_history)
