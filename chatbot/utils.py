@@ -8,34 +8,65 @@ from django.conf import settings
 # ---------------------------------------------------------------------------
 KNOWLEDGE_BASE = {
     'resume_tips': [
-        "Use the XYZ formula for bullet points: 'Accomplished [X] as measured by [Y], by doing [Z]'.",
+        "Use the XYZ formula: 'Accomplished [X] as measured by [Y], by doing [Z]'.",
         "Keep your resume to one page if you have less than 10 years of experience.",
-        "Ensure your contact information is at the very top, including a link to your LinkedIn or portfolio.",
-        "Remove objective statements. Use a professional summary instead if you are changing careers.",
-        "Quantify your achievements with numbers, percentages, and dollar amounts wherever possible."
+        "Put contact info at the very top — include your LinkedIn and GitHub links.",
+        "Drop objective statements. Use a 2-line professional summary instead.",
+        "Quantify every achievement with numbers, percentages, or dollar amounts."
     ],
     'job_search': [
-        "Don't just apply online. Reach out to recruiters and engineering managers directly on LinkedIn.",
-        "Tailor your resume for every application by including keywords from the job description.",
-        "Treat your job search like a full-time job. Set daily goals for applications, networking, and skill-building.",
-        "Leverage weak ties. Often, jobs come from acquaintances rather than close friends.",
-        "Use niche job boards in addition to the big ones like LinkedIn and Indeed."
+        "Skip the apply button. Message the hiring manager directly on LinkedIn.",
+        "Tailor your resume per role — paste 5 exact keywords from the JD.",
+        "Treat job hunting like a pipeline: track applications in a spreadsheet.",
+        "Weak ties matter more than strong ones — contact ex-colleagues and alumni.",
+        "Set up job alerts on LinkedIn, Indeed, and the company's own careers page."
     ],
     'interview_prep': [
-        "Use the STAR method for behavioral questions: Situation, Task, Action, Result.",
-        "Always have 2-3 thoughtful questions prepared to ask the interviewer at the end.",
-        "Research the company's culture and recent news before the interview.",
-        "Practice answering 'Tell me about yourself' out loud until it sounds natural.",
-        "It's okay to ask for a moment to think before answering a complex technical question."
+        "Use STAR for behavioral questions: Situation, Task, Action, Result — keep it under 2 minutes.",
+        "Prepare 3 sharp questions to ask the interviewer — shows you did your research.",
+        "Research the company's last 3 press releases before any interview.",
+        "Practice 'Tell me about yourself' out loud until it's 60 seconds clean.",
+        "Pause before answering complex questions — it signals confidence, not confusion."
     ],
     'trending_skills': [
-        "Cloud Computing (AWS, Azure, GCP)",
-        "Artificial Intelligence / Machine Learning (Python, PyTorch, TensorFlow)",
-        "Data Engineering and Analytics (SQL, Snowflake, Pandas)",
-        "Full-Stack Development (React, Node.js, Django)",
-        "DevOps & CI/CD (Docker, Kubernetes, GitHub Actions)"
+        "Cloud Computing (AWS, Azure, GCP) — essential for most engineering roles.",
+        "AI/ML (Python, PyTorch, TensorFlow) — fastest growing demand globally.",
+        "Data Engineering (SQL, Snowflake, dbt, Pandas) — highly paid niche.",
+        "Full-Stack (React, Node.js, Django, FastAPI) — versatile and in-demand.",
+        "DevOps & CI/CD (Docker, Kubernetes, GitHub Actions) — every team needs it."
     ]
 }
+
+# ---------------------------------------------------------------------------
+# Response Post-Processing
+# ---------------------------------------------------------------------------
+def _trim_response(text, max_chars=800):
+    """
+    Safely trim AI response to max_chars by cutting at the last full sentence.
+    Preserves bullet-point structure. Returns the trimmed string.
+    """
+    if not text:
+        return text
+    text = text.strip()
+    if len(text) <= max_chars:
+        return text
+
+    # Cut at last sentence boundary within limit
+    chunk = text[:max_chars]
+    # Try to cut at last bullet point or sentence end
+    for sep in ['\n', '. ', '! ', '? ']:
+        idx = chunk.rfind(sep)
+        if idx > max_chars * 0.5:  # don't cut too early
+            return chunk[:idx + len(sep)].strip()
+
+    return chunk.strip()
+
+
+def _is_rewrite_request(user_input):
+    """Detect if the user wants a sentence/bullet rewritten."""
+    triggers = ['rewrite', 'improve this', 'fix this', 'reword', 'rephrase', 'make this better']
+    lower = user_input.lower()
+    return any(t in lower for t in triggers)
 
 
 # ---------------------------------------------------------------------------
@@ -43,8 +74,8 @@ KNOWLEDGE_BASE = {
 # ---------------------------------------------------------------------------
 def generate_ai_response(user_input, resume_text, job_description, chat_history=None):
     """
-    Calls the Gemini API with the full conversation history and resume context.
-    Returns the AI response text, or None on failure.
+    Calls the Gemini API with full conversation history and resume context.
+    Returns trimmed AI response text, or None on failure.
     """
     print("Gemini started")
 
@@ -53,64 +84,120 @@ def generate_ai_response(user_input, resume_text, job_description, chat_history=
         print("Gemini failed: GEMINI_API_KEY is missing or not set")
         return None
 
-    safe_resume = resume_text or ""
-    safe_job    = job_description or ""
+    safe_resume = (resume_text or "").strip()
+    safe_job    = (job_description or "").strip()
+    is_rewrite  = _is_rewrite_request(user_input)
 
-    # Build the system prompt — context-aware, NOT locked to "give resume tips"
-    system_prompt = """You are SmartHire AI Coach — a friendly, knowledgeable career assistant.
+    # -----------------------------------------------------------------------
+    # RECRUITER PERSONA SYSTEM PROMPT
+    # -----------------------------------------------------------------------
+    if is_rewrite:
+        mode_instruction = (
+            "The user wants their sentence/bullet rewritten.\n"
+            "Return ONLY the improved sentence — no explanation, no preamble.\n"
+            "Make it: concise, metric-driven, action-verb led, ATS-optimised.\n"
+            "Example output: 'Built and shipped a REST API reducing response latency by 40%.'"
+        )
+    elif safe_job:
+        mode_instruction = (
+            "A job description is provided. Your job:\n"
+            "1. Identify how well the candidate matches this role (give a % estimate).\n"
+            "2. Name the top 1-2 missing skills or keywords from their resume vs. the JD.\n"
+            "3. Give one concrete action they can take TODAY to improve their chances.\n"
+            "Be decisive. If they ask 'should I apply?' — tell them yes or no and why."
+        )
+    else:
+        mode_instruction = (
+            "No job description provided. Focus on:\n"
+            "- ATS optimisation and resume quality\n"
+            "- Career strategy and positioning\n"
+            "- Skill gaps and market relevance\n"
+            "Reference specific details from their resume when giving advice."
+        )
 
-You have access to the user's resume and (optionally) a job description they are targeting.
-You MUST respond directly and helpfully to whatever the user actually says or asks.
+    system_prompt = """You are a Senior Technical Recruiter with 10+ years of experience placing candidates at FAANG companies, top startups, and Fortune 500 firms. You are also a certified career strategist who charges $300/hr for resume reviews.
 
-Guidelines:
-- If they ask a general career/project/industry question, answer it conversationally.
-- If they ask about their resume specifically, reference the resume text and give tailored advice.
-- If they want something rewritten, rewrite it clearly.
-- If they are sharing something (e.g., "I am working on a project"), acknowledge it and offer relevant, specific career guidance — e.g., how to frame it on their resume, how to showcase it to employers, what to highlight, etc.
-- Keep responses concise and readable. Use markdown bullet points only when listing multiple items.
-- NEVER give the same generic "improve your resume" bullet list when the user is asking something else.
-- Be warm, encouraging, and professional.
+YOUR COMMUNICATION RULES (NON-NEGOTIABLE):
+- Reply in EITHER: max 3–5 bullet points, OR max 2–3 short sentences. NEVER both. NEVER long paragraphs.
+- Be direct and specific. No motivational fluff. No filler phrases like "Great question!" or "Absolutely!".
+- Lead with the most important insight first.
+- Use action verbs and metrics whenever possible.
+- If you don't have enough context, ask ONE targeted question.
+- NEVER repeat the user's question back to them.
+- NEVER give generic advice that any chatbot would give.
 
-Resume Context (extracted text, first 2000 chars):
+YOUR EXPERTISE:
+- ATS keyword optimisation and formatting rules
+- Resume bullet rewriting with quantified impact
+- LinkedIn headline and summary optimisation
+- Salary benchmarking and offer negotiation
+- Identifying red flags in job descriptions
+- Interview preparation with company-specific patterns
+- Career gap framing and narrative building
+- Role transition strategy (e.g., from engineer to PM)
+
+CURRENT MODE:
+{mode}
+
+CANDIDATE RESUME (first 2000 chars):
 \"\"\"
 {resume}
 \"\"\"
 
-Job Description they are targeting:
+TARGET JOB DESCRIPTION:
 \"\"\"
 {job_desc}
 \"\"\"
 """.format(
-        resume=safe_resume[:2000] if safe_resume else "Not provided — user has not uploaded/analysed a resume yet.",
+        mode=mode_instruction,
+        resume=safe_resume[:2000] if safe_resume else "Not uploaded — give general advice based on the conversation.",
         job_desc=safe_job[:1000] if safe_job else "Not provided."
     )
 
-    # Build conversation history for Gemini (last 10 turns to stay within token limits)
+    # Build conversation history (last 8 turns to stay within context)
     history_text = ""
     if chat_history:
-        recent = chat_history[-10:]  # last 10 messages
+        recent = chat_history[-8:]
         for msg in recent:
-            role = "User" if msg['role'] == 'user' else "Assistant"
+            role = "Candidate" if msg['role'] == 'user' else "Recruiter"
             history_text += f"{role}: {msg['content']}\n\n"
 
-    full_prompt = f"{system_prompt}\n\n--- Conversation so far ---\n{history_text}User: {user_input}\n\nAssistant:"
+    full_prompt = (
+        f"{system_prompt}\n\n"
+        f"--- Conversation ---\n{history_text}"
+        f"Candidate: {user_input}\n\n"
+        f"Recruiter:"
+    )
+
+    # Generation config — hard cap on token output
+    generation_config = {
+        "max_output_tokens": 250,
+        "temperature": 0.5,
+        "top_p": 0.9,
+    }
 
     try:
         from google import genai
+        from google.genai import types as genai_types
 
         client = genai.Client(api_key=api_key)
 
-        # Try models in order — lite first (more free-tier quota), then fallback
-        models_to_try = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
+        models_to_try = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"]
         for model_name in models_to_try:
             try:
                 response = client.models.generate_content(
                     model=model_name,
-                    contents=full_prompt
+                    contents=full_prompt,
+                    config=genai_types.GenerateContentConfig(
+                        max_output_tokens=generation_config["max_output_tokens"],
+                        temperature=generation_config["temperature"],
+                        top_p=generation_config["top_p"],
+                    )
                 )
-                if response and response.text:
+                if response and response.text and response.text.strip():
+                    result = _trim_response(response.text.strip())
                     print(f"Gemini success (model: {model_name})")
-                    return response.text.strip()
+                    return result
             except Exception as model_err:
                 print(f"Gemini model {model_name} failed: {model_err}")
                 continue
@@ -119,17 +206,30 @@ Job Description they are targeting:
         return None
 
     except ImportError:
-        # Fallback to legacy library if new SDK not installed
+        # Fallback to legacy google-generativeai SDK
         try:
             import google.generativeai as genai_legacy
+            from google.generativeai.types import GenerationConfig
+
             genai_legacy.configure(api_key=api_key)
             model = genai_legacy.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(full_prompt)
-            if response and hasattr(response, 'text') and response.text:
+            response = model.generate_content(
+                full_prompt,
+                generation_config=GenerationConfig(
+                    max_output_tokens=250,
+                    temperature=0.5,
+                )
+            )
+            if response and hasattr(response, 'text') and response.text and response.text.strip():
+                result = _trim_response(response.text.strip())
                 print("Gemini success (legacy SDK)")
-                return response.text.strip()
+                return result
         except Exception as legacy_err:
             print(f"Gemini legacy SDK failed: {legacy_err}")
+        return None
+
+    except Exception as e:
+        print(f"Gemini failed: {e}")
         return None
 
 
@@ -137,14 +237,14 @@ Job Description they are targeting:
 # Fallback rule-based engine (when Gemini is unavailable)
 # ---------------------------------------------------------------------------
 def analyze_intent(message):
-    """Categorizes the user's message using keyword-based logic."""
+    """Categorises the user's message using keyword-based logic."""
     msg = message.lower()
     intent_keywords = {
         'resume_improvement': ['improve', 'resume', 'cv', 'better', 'fix', 'format', 'ats'],
         'skills_recommendation': ['skill', 'learn', 'trending', 'technology', 'stack'],
-        'job_search': ['job', 'apply', 'search', 'hire', 'find', 'roadmap'],
+        'job_search': ['job', 'apply', 'search', 'hire', 'find', 'roadmap', 'should i apply'],
         'interview': ['interview', 'prepare', 'questions', 'star', 'behavioral'],
-        'rewrite': ['rewrite', 'sentence', 'bullet', 'fix this', 'reword'],
+        'rewrite': ['rewrite', 'improve this', 'fix this', 'reword', 'rephrase'],
         'project': ['project', 'working on', 'building', 'developing', 'created', 'built']
     }
     best_intent = 'unknown'
@@ -158,84 +258,88 @@ def analyze_intent(message):
 
 
 def process_rewrite(message):
-    """Rewrites a sentence to sound more professional."""
-    text = re.sub(r'rewrite|fix this|reword|sentence|bullet', '', message, flags=re.IGNORECASE).strip(' :.,')
+    """Rewrites a sentence to be concise, metric-driven, and ATS-optimised."""
+    text = re.sub(
+        r'\b(rewrite|fix this|reword|improve this|rephrase|make this better)\b',
+        '', message, flags=re.IGNORECASE
+    ).strip(' :.,-')
+
     if not text:
-        return "Please provide the specific sentence you'd like me to rewrite."
-    if "managed" in text.lower() or "team" in text.lower():
-        return "**Rewrite:** *'Spearheaded a cross-functional team, driving strategic initiatives and delivering measurable results.'*"
-    elif "helped" in text.lower() or "worked" in text.lower():
-        return "**Rewrite:** *'Collaborated closely with stakeholders to execute project goals and optimize workflows.'*"
-    elif "built" in text.lower() or "made" in text.lower():
-        return "**Rewrite:** *'Architected and implemented robust solutions, resulting in improved system efficiency.'*"
-    return f"**Rewrite:** *'Successfully delivered {text}, consistently exceeding performance benchmarks.'*"
+        return "Paste the sentence you'd like me to rewrite — I'll make it ATS-ready and metric-driven."
+
+    lower = text.lower()
+    if any(w in lower for w in ['managed', 'led', 'team']):
+        return "**Rewrite:** Led a cross-functional team of engineers, delivering a high-priority feature 2 weeks ahead of schedule."
+    elif any(w in lower for w in ['helped', 'worked', 'assisted']):
+        return "**Rewrite:** Collaborated with cross-functional stakeholders to streamline workflows, reducing delivery time by 25%."
+    elif any(w in lower for w in ['built', 'made', 'created', 'developed']):
+        return "**Rewrite:** Engineered and shipped a production-ready solution that improved system throughput by 35%."
+    elif any(w in lower for w in ['worked on', 'involved in']):
+        return "**Rewrite:** Drove end-to-end implementation of a core platform feature adopted by 5,000+ users."
+    return f"**Rewrite:** Successfully delivered {text}, achieving measurable improvements in efficiency and stakeholder satisfaction."
 
 
 def fallback_intelligent_response(message, resume_text=None):
     """
     Rule-based fallback — only used when Gemini is completely unavailable.
+    Kept intentionally lean and recruiter-toned.
     """
     intent = analyze_intent(message)
     msg_lower = message.lower()
 
-    if intent == 'rewrite' or msg_lower.startswith('rewrite') or msg_lower.startswith('fix'):
+    if intent == 'rewrite' or _is_rewrite_request(message):
         return process_rewrite(message)
 
     if intent == 'project':
         return (
-            "That sounds great! Here's how to showcase your project effectively:\n\n"
-            "- **Add a Projects section** to your resume with the project name, tech stack, and outcome.\n"
-            "- **Quantify the impact**: e.g., 'Reduced deployment time by 40%' or 'Handles 1K+ requests/day'.\n"
-            "- **Link to it**: Add a GitHub link so recruiters can see your code.\n"
-            "- **Frame it as experience**: Treat it like real work — emphasise what problem it solves.\n\n"
-            "Tell me more about your project and I can help you write a great bullet point for it!"
+            "To showcase this project effectively:\n\n"
+            "- **Add it to a Projects section** with: name, tech stack, and measurable outcome.\n"
+            "- **Quantify the impact** — e.g., 'Handles 1K+ requests/min' or 'Reduced load time by 40%'.\n"
+            "- **Link to the GitHub repo** so recruiters can verify your work."
         )
 
     if intent == 'resume_improvement':
-        response = "Here are some quick ATS-focused improvements for your resume:\n\n"
-        for tip in random.sample(KNOWLEDGE_BASE['resume_tips'], 3):
+        tips = random.sample(KNOWLEDGE_BASE['resume_tips'], 3)
+        response = "Top 3 ATS improvements for your resume:\n\n"
+        for tip in tips:
             response += f"- {tip}\n"
         if resume_text:
             word_count = len(resume_text.split())
             if word_count < 200:
-                response += "\n*Your resume looks short — make sure you fully describe your experiences.*"
+                response += "\n⚠️ *Resume is too thin — flesh out your experience sections.*"
             elif word_count > 1000:
-                response += "\n*Your resume may be too long — prioritise your most impactful achievements.*"
+                response += "\n⚠️ *Resume is too long — cut to your top 5 most impactful bullets.*"
         return response
 
-    elif intent == 'skills_recommendation':
-        response = "Here are the most in-demand skills right now:\n\n"
-        for skill in KNOWLEDGE_BASE['trending_skills']:
+    if intent == 'skills_recommendation':
+        response = "Top in-demand skills right now:\n\n"
+        for skill in KNOWLEDGE_BASE['trending_skills'][:4]:
             response += f"- {skill}\n"
         if resume_text and "python" not in resume_text.lower():
-            response += "\n*Tip: Python isn't on your resume yet — it's highly valued across tech roles!*"
+            response += "\n*Python isn't on your resume — it's the #1 requested skill in tech.*"
         return response
 
-    elif intent == 'job_search':
+    if intent == 'job_search':
         return (
-            "Here's a job search roadmap:\n\n"
-            "1. Optimise your LinkedIn to match your resume.\n"
-            "2. Set up job alerts on LinkedIn, Indeed and company career pages.\n"
-            "3. Spend 20% of your time applying, 80% networking.\n"
-            "4. Send polite follow-ups one week after applying."
+            "Job search priorities:\n\n"
+            "- Optimise LinkedIn headline to match your target role title.\n"
+            "- Apply to 5–10 roles/day; spend equal time on networking.\n"
+            "- Follow up with hiring managers 5 business days after submitting."
         )
 
-    elif intent == 'interview':
-        response = "Key interview tips:\n\n"
-        for tip in random.sample(KNOWLEDGE_BASE['interview_prep'], 3):
+    if intent == 'interview':
+        tips = random.sample(KNOWLEDGE_BASE['interview_prep'], 3)
+        response = "Key interview tactics:\n\n"
+        for tip in tips:
             response += f"- {tip}\n"
-        response += "\nWould you like me to give you a sample behavioural question to practise?"
         return response
 
-    else:
-        tip = random.choice(KNOWLEDGE_BASE['resume_tips'])
-        return (
-            f"I'm here to help with your career! Here's a quick tip: *{tip}*\n\n"
-            "You can ask me things like:\n"
-            "- *How can I improve my resume?*\n"
-            "- *What skills should I learn for a DevOps role?*\n"
-            "- *I'm working on a Python project — how do I add it to my resume?*"
-        )
+    # Generic fallback
+    tip = random.choice(KNOWLEDGE_BASE['resume_tips'])
+    return (
+        f"Quick tip: *{tip}*\n\n"
+        "Ask me anything — resume rewrites, job match analysis, interview prep, or salary benchmarking."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -243,12 +347,14 @@ def fallback_intelligent_response(message, resume_text=None):
 # ---------------------------------------------------------------------------
 def generate_intelligent_response(message, resume_text=None, job_description=None, chat_history=None):
     """
-    Tries Gemini first. Falls back to rule-based engine if Gemini fails.
+    Primary entry point. Tries Gemini first with recruiter persona.
+    Falls back to rule-based engine if Gemini fails for any reason.
+    Always returns a non-empty string.
     """
     if settings.ENABLE_AI_COACH:
         try:
             ai_text = generate_ai_response(message, resume_text, job_description, chat_history)
-            if ai_text:
+            if ai_text and ai_text.strip():
                 return ai_text
         except Exception as e:
             print(f"Gemini failed unexpectedly: {e}")
