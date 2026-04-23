@@ -41,30 +41,70 @@
     margin-bottom: 0.75rem;
 }
 
-.chip-action {
-    display: block;
-    width: 100%;
-    text-align: left;
-    border: 1px solid var(--border-color);
+/* ===== CHAT HISTORY (sidebar) ===== */
+.history-scroll {
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.history-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.45rem 0.55rem;
     border-radius: 8px;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.78rem;
-    color: var(--text-main);
-    background: transparent;
     cursor: pointer;
-    transition: all 0.18s;
-    margin-bottom: 0.4rem;
-    line-height: 1.3;
+    transition: background 0.15s;
+    margin-bottom: 0.2rem;
+    text-decoration: none;
 }
 
-.chip-action:hover {
-    border-color: var(--accent-color);
-    background: rgba(59, 130, 246, 0.06);
+.history-item:hover {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.history-item-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
     color: var(--accent-color);
-    transform: translateX(2px);
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
-.chip-action i { margin-right: 5px; font-size: 0.8rem; }
+.history-item-text {
+    font-size: 0.75rem;
+    color: var(--text-main);
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.history-empty {
+    font-size: 0.74rem;
+    color: #94a3b8;
+    text-align: center;
+    padding: 1.25rem 0 0.5rem;
+    line-height: 1.6;
+}
+
+.history-today-label {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+    padding-left: 0.1rem;
+}
 
 /* ===== MAIN CHAT ===== */
 .recruiter-chat-main {
@@ -138,18 +178,47 @@
 
 .header-actions { display: flex; gap: 0.5rem; align-items: center; }
 
+/* ===== DATE SEPARATOR ===== */
+.date-separator {
+    text-align: center;
+    margin: 0.9rem 0 1rem;
+    position: relative;
+}
+
+.date-separator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.date-separator span {
+    position: relative;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    background: #f8fafc;
+    padding: 0.18rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
 /* ===== MESSAGES ===== */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 1.25rem;
+    padding: 0 1.25rem 0.5rem;
     background: #f8fafc;
     scroll-behavior: smooth;
 }
 
 .message-row {
     display: flex;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.1rem;
     animation: fadeSlide 0.25s ease-out;
 }
 
@@ -184,7 +253,6 @@
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
     line-height: 1.55;
-    border-radius: 4px;
 }
 
 .bot-bubble {
@@ -201,7 +269,7 @@
     border-radius: 12px 2px 12px 12px;
 }
 
-/* Markdown rendering inside bot bubbles */
+/* Markdown inside bot bubbles */
 .bot-bubble strong { color: var(--text-main); font-weight: 700; }
 .bot-bubble ul, .bot-bubble ol { padding-left: 1.2rem; margin: 0.4rem 0 0; }
 .bot-bubble li { margin-bottom: 0.2rem; font-size: 0.88rem; }
@@ -214,11 +282,15 @@
     font-size: 0.8rem;
     color: #0f172a;
 }
+.bot-bubble table { font-size: 0.82rem; border-collapse: collapse; width: 100%; margin: 0.4rem 0; }
+.bot-bubble th, .bot-bubble td { border: 1px solid #e2e8f0; padding: 0.3rem 0.5rem; }
+.bot-bubble th { background: #f1f5f9; font-weight: 700; }
+.bot-bubble blockquote { border-left: 3px solid var(--accent-color); padding-left: 0.75rem; margin: 0.4rem 0; color: #64748b; font-style: italic; }
 
 /* ===== TYPING INDICATOR ===== */
 .typing-row {
     display: none;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
 }
 
 .typing-bubble {
@@ -251,11 +323,58 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== INPUT AREA ===== */
-.chat-input-area {
-    padding: 1rem 1.25rem;
+/* ===== SUGGESTION PILLS (PhonePe style, above input) ===== */
+.suggestion-pills-wrap {
+    padding: 0.65rem 1.25rem 0;
     background: var(--surface-color);
     border-top: 1px solid var(--border-color);
+    transition: opacity 0.2s;
+}
+
+.suggestion-pills-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.45rem;
+}
+
+.suggestion-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-bottom: 0.65rem;
+}
+
+.suggestion-pill {
+    border: 1.5px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.32rem 0.85rem;
+    font-size: 0.78rem;
+    color: var(--text-main);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.suggestion-pill:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.06);
+    transform: translateY(-1px);
+}
+
+.suggestion-pill:active {
+    transform: translateY(0);
+}
+
+/* ===== INPUT AREA ===== */
+.chat-input-area {
+    padding: 0.85rem 1.25rem 0.9rem;
+    background: var(--surface-color);
 }
 
 .input-wrapper {
@@ -309,7 +428,7 @@
 .input-footer {
     display: flex;
     justify-content: center;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
 }
 
 .input-footer small { font-size: 0.7rem; color: #94a3b8; }
@@ -334,6 +453,7 @@
     <!-- ===== SIDEBAR ===== -->
     <div class="recruiter-sidebar">
 
+        <!-- Resume Info Card -->
         <div class="sidebar-card">
             <h6>📄 Resume</h6>
             <div style="font-size:0.82rem; color: var(--text-main); word-break: break-word;">
@@ -351,26 +471,33 @@
             {% endif %}
         </div>
 
-        <div class="sidebar-card">
-            <h6>⚡ Quick Actions</h6>
-            <button class="chip-action" data-msg="Is my resume ATS-ready? What should I fix?">
-                <i class="bi bi-check2-circle"></i> ATS Check
-            </button>
-            <button class="chip-action" data-msg="Should I apply for this role based on my profile?">
-                <i class="bi bi-briefcase"></i> Should I apply?
-            </button>
-            <button class="chip-action" data-msg="Rewrite my professional summary to be more impactful.">
-                <i class="bi bi-pencil-square"></i> Rewrite Summary
-            </button>
-            <button class="chip-action" data-msg="What are the top skills I'm missing for this role?">
-                <i class="bi bi-bar-chart"></i> Skill Gaps
-            </button>
-            <button class="chip-action" data-msg="Give me 3 tough interview questions for this role and how to answer them.">
-                <i class="bi bi-chat-quote"></i> Interview Prep
-            </button>
-            <button class="chip-action" data-msg="What salary should I expect for this role in the current market?">
-                <i class="bi bi-currency-dollar"></i> Salary Intel
-            </button>
+        <!-- Chat History Card (replaces Quick Actions) -->
+        <div class="sidebar-card" style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+            <h6><i class="bi bi-clock-history me-1"></i>Chat History</h6>
+
+            <div class="history-scroll" id="historyList">
+
+                {% for message in chat_history %}
+                    {% if message.role == 'user' %}
+                    <div
+                        class="history-item"
+                        onclick="scrollToMessage('user-msg-{{ forloop.counter }}')"
+                        title="{{ message.content }}"
+                    >
+                        <div class="history-item-icon">
+                            <i class="bi bi-chat-right-text"></i>
+                        </div>
+                        <div class="history-item-text">{{ message.content|truncatechars:55 }}</div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <div class="history-empty" id="historyEmpty">
+                    <i class="bi bi-chat-dots d-block mb-1" style="font-size:1.3rem; color:#cbd5e1;"></i>
+                    No history yet.<br>
+                    <span style="font-size:0.7rem;">Your questions will<br>appear here.</span>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -387,7 +514,7 @@
                 <div>
                     <p class="recruiter-name">Senior Recruiter AI</p>
                     <p class="recruiter-title">
-                        <span class="online-dot"></span>10+ yrs hiring · FAANG &amp; Fortune 500
+                        <span class="online-dot"></span>10+ yrs hiring &middot; FAANG &amp; Fortune 500
                     </p>
                 </div>
             </div>
@@ -403,14 +530,21 @@
 
         <!-- Messages -->
         <div class="chat-messages" id="chatContainer">
+
+            <!-- Date separator -->
+            <div class="date-separator">
+                <span id="chatDateLabel">Today</span>
+            </div>
+
+            <!-- Chat history messages -->
             {% for message in chat_history %}
                 {% if message.role == 'assistant' %}
-                <div class="message-row message-bot">
+                <div class="message-row message-bot" id="bot-msg-{{ forloop.counter }}">
                     <div class="msg-avatar msg-avatar-bot"><i class="bi bi-person-badge-fill"></i></div>
                     <div class="message-bubble bot-bubble bot-md-content">{{ message.content }}</div>
                 </div>
                 {% elif message.role == 'user' %}
-                <div class="message-row message-user">
+                <div class="message-row message-user" id="user-msg-{{ forloop.counter }}">
                     <div class="message-bubble user-bubble">{{ message.content|linebreaksbr }}</div>
                     <div class="msg-avatar msg-avatar-user"><i class="bi bi-person-fill"></i></div>
                 </div>
@@ -426,9 +560,46 @@
             </div>
         </div>
 
+        <!-- ===== SUGGESTION PILLS (PhonePe style — shown above input on fresh chat) ===== -->
+        <div class="suggestion-pills-wrap" id="suggestionWrap">
+            <div class="suggestion-pills-label">Quick queries</div>
+            <div class="suggestion-pills">
+                <button class="suggestion-pill" data-msg="Review my resume and give me a full ATS score analysis with specific fixes">
+                    <i class="bi bi-check2-circle me-1"></i>ATS Review
+                </button>
+                <button class="suggestion-pill" data-msg="What skills am I missing for my target role based on my resume">
+                    <i class="bi bi-bar-chart me-1"></i>Skill Gaps
+                </button>
+                <button class="suggestion-pill" data-msg="Prepare me for an interview with 3 real questions and answer strategies">
+                    <i class="bi bi-chat-quote me-1"></i>Interview Prep
+                </button>
+                <button class="suggestion-pill" data-msg="What is the salary benchmark for this role in Pakistan UAE and USA">
+                    <i class="bi bi-currency-dollar me-1"></i>Salary Intel
+                </button>
+                <button class="suggestion-pill" data-msg="How do I optimise my LinkedIn profile to attract recruiters">
+                    <i class="bi bi-linkedin me-1"></i>LinkedIn Tips
+                </button>
+                <button class="suggestion-pill" data-msg="How do I find and land a remote job">
+                    <i class="bi bi-globe me-1"></i>Remote Jobs
+                </button>
+                <button class="suggestion-pill" data-msg="Analyse my job description match and tell me should I apply for this role">
+                    <i class="bi bi-briefcase me-1"></i>Should I Apply?
+                </button>
+                <button class="suggestion-pill" data-msg="What certifications should I get to boost my career">
+                    <i class="bi bi-award me-1"></i>Certifications
+                </button>
+                <button class="suggestion-pill" data-msg="How do I explain a career gap in my resume or interview">
+                    <i class="bi bi-calendar-x me-1"></i>Career Gap
+                </button>
+                <button class="suggestion-pill" data-msg="What are the trending tech skills to learn in 2025">
+                    <i class="bi bi-graph-up-arrow me-1"></i>Trending Skills
+                </button>
+            </div>
+        </div>
+
         <!-- Input -->
         <div class="chat-input-area">
-            <!-- Hidden POST form (fallback if JS disabled) -->
+            <!-- Hidden POST form (JS-disabled fallback) -->
             <form method="POST" id="chatFormFallback" style="display:none;">
                 {% csrf_token %}
                 <input type="text" name="message" id="hiddenMsgInput">
@@ -442,7 +613,7 @@
                 </button>
             </div>
             <div class="input-footer">
-                <small>Senior Recruiter AI · Direct, concise, no-fluff advice · Powered by Gemini</small>
+                <small>Senior Recruiter AI &middot; Direct, no-fluff career advice &middot; SmartHireAI Career Engine</small>
             </div>
         </div>
 
@@ -450,7 +621,7 @@
 </div><!-- /recruiter-chat-wrap -->
 </div><!-- /container-fluid -->
 
-<!-- ===== MARKED.JS for markdown rendering ===== -->
+<!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <script>
@@ -459,22 +630,51 @@
     const CLEAR_URL = "{% url 'clear_chat' resume.id %}";
     const CSRF      = "{{ csrf_token }}";
 
-    const container  = document.getElementById('chatContainer');
-    const input      = document.getElementById('chatInput');
-    const sendBtn    = document.getElementById('sendBtn');
-    const typingRow  = document.getElementById('typingRow');
-    const clearBtn   = document.getElementById('clearChatBtn');
+    const container     = document.getElementById('chatContainer');
+    const input         = document.getElementById('chatInput');
+    const sendBtn       = document.getElementById('sendBtn');
+    const typingRow     = document.getElementById('typingRow');
+    const clearBtn      = document.getElementById('clearChatBtn');
+    const suggWrap      = document.getElementById('suggestionWrap');
+    const historyEmpty  = document.getElementById('historyEmpty');
+    const historyList   = document.getElementById('historyList');
 
-    // ── Configure marked for safe, clean rendering ──
-    marked.setOptions({
-        breaks: true,
-        gfm: true,
-    });
+    // ── Configure marked ──
+    marked.setOptions({ breaks: true, gfm: true });
 
-    // ── Render all existing bot messages as markdown ──
+    // ── Render existing bot messages as markdown ──
     document.querySelectorAll('.bot-md-content').forEach(el => {
         el.innerHTML = marked.parse(el.textContent || '');
     });
+
+    // ── Set date label (e.g. "Today" or actual date) ──
+    const dateLabel = document.getElementById('chatDateLabel');
+    if (dateLabel) {
+        const now = new Date();
+        dateLabel.textContent = now.toLocaleDateString('en-US', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        }).toUpperCase();
+    }
+
+    // ── Check if pills should be shown (only on fresh chat = 1 msg total) ──
+    const totalMessages = {{ chat_history|length }};
+    if (totalMessages > 1) {
+        suggWrap.style.display = 'none';
+    }
+
+    // ── Hide "No history yet" if sidebar already has user message items ──
+    const existingHistoryItems = historyList.querySelectorAll('.history-item');
+    if (existingHistoryItems.length > 0 && historyEmpty) {
+        historyEmpty.style.display = 'none';
+    }
+
+    // ── Hide pills once user sends first message ──
+    function hidePills() {
+        if (suggWrap.style.display !== 'none') {
+            suggWrap.style.opacity = '0';
+            setTimeout(() => { suggWrap.style.display = 'none'; }, 200);
+        }
+    }
 
     // ── Auto-resize textarea ──
     input.addEventListener('input', function() {
@@ -488,9 +688,45 @@
     }
     scrollBottom();
 
-    // ── Append a message bubble ──
+    // ── Scroll to specific message (for history sidebar clicks) ──
+    window.scrollToMessage = function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = 'background 0.3s';
+            el.querySelector('.message-bubble').style.boxShadow = '0 0 0 2px #3b82f6';
+            setTimeout(() => {
+                const bubble = el.querySelector('.message-bubble');
+                if (bubble) bubble.style.boxShadow = '';
+            }, 1800);
+        }
+    };
+
+    // ── Add message to history sidebar ──
+    function addToHistorySidebar(text) {
+        if (historyEmpty) historyEmpty.style.display = 'none';
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.title = text;
+        const preview = text.length > 55 ? text.slice(0, 55) + '…' : text;
+        item.innerHTML = `
+            <div class="history-item-icon"><i class="bi bi-chat-right-text"></i></div>
+            <div class="history-item-text">${escapeHtml(preview)}</div>`;
+        // Insert before historyEmpty (or at end)
+        if (historyEmpty) {
+            historyList.insertBefore(item, historyEmpty);
+        } else {
+            historyList.appendChild(item);
+        }
+    }
+
+    // ── Append a message bubble to chat ──
+    let msgCounter = totalMessages;
     function appendMessage(role, content) {
+        msgCounter++;
         const row = document.createElement('div');
+        const id = `${role === 'user' ? 'user' : 'bot'}-msg-${msgCounter}`;
+        row.id = id;
         row.className = `message-row message-${role === 'user' ? 'user' : 'bot'}`;
 
         if (role === 'user') {
@@ -514,25 +750,27 @@
         return d.innerHTML;
     }
 
-    // ── Show / hide typing indicator ──
+    // ── Typing ──
     function showTyping()  { typingRow.style.display = 'flex'; scrollBottom(); }
     function hideTyping()  { typingRow.style.display = 'none'; }
 
-    // ── Disable / enable input while waiting ──
+    // ── Loading state ──
     function setLoading(on) {
         input.disabled = on;
         sendBtn.disabled = on;
         sendBtn.style.opacity = on ? '0.5' : '1';
     }
 
-    // ── Core send function ──
-    async function sendMessage() {
-        const text = input.value.trim();
+    // ── Core send ──
+    async function sendMessage(text) {
+        text = text || input.value.trim();
         if (!text) return;
 
+        hidePills();
         input.value = '';
         input.style.height = 'auto';
         appendMessage('user', text);
+        addToHistorySidebar(text);
         showTyping();
         setLoading(true);
 
@@ -554,7 +792,6 @@
         } catch (err) {
             console.error('AJAX error:', err);
             hideTyping();
-            // Graceful fallback: submit via hidden form
             appendMessage('assistant', 'Network hiccup — please try again or refresh the page.');
         } finally {
             setLoading(false);
@@ -563,7 +800,7 @@
     }
 
     // ── Send on button click ──
-    sendBtn.addEventListener('click', sendMessage);
+    sendBtn.addEventListener('click', () => sendMessage());
 
     // ── Send on Enter (Shift+Enter = newline) ──
     input.addEventListener('keydown', function(e) {
@@ -573,12 +810,10 @@
         }
     });
 
-    // ── Quick-action chips ──
-    document.querySelectorAll('.chip-action').forEach(btn => {
+    // ── Quick suggestion pills ──
+    document.querySelectorAll('.suggestion-pill').forEach(btn => {
         btn.addEventListener('click', function() {
-            input.value = this.dataset.msg || '';
-            input.dispatchEvent(new Event('input'));
-            input.focus();
+            sendMessage(this.dataset.msg || '');
         });
     });
 
