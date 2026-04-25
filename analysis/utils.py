@@ -172,6 +172,31 @@ _STACKS = {
     'jamstack': {'javascript', 'api', 'markup'},
 }
 
+# --- Experience Level Signals ---
+_SENIORITY = {
+    'junior': 1, 'entry level': 1, 'entry-level': 1, 'associate': 1,
+    'mid level': 2, 'mid-level': 2, 'intermediate': 2,
+    'senior': 3, 'lead': 3, 'principal': 4, 'staff': 4,
+    'architect': 4, 'director': 5, 'head of': 5, 'vp': 5, 'manager': 3,
+}
+
+# --- Education Signals ---
+_EDUCATION = {
+    "bachelor's", 'bachelor', 'bs', 'b.s.', 'b.e.', 'bsc', 'b.sc.',
+    "master's", 'master', 'ms', 'm.s.', 'msc', 'm.sc.', 'mba',
+    'phd', 'ph.d.', 'doctorate', 'degree', 'computer science',
+    'engineering', 'information technology', 'software engineering',
+    'data science', 'mathematics', 'statistics',
+}
+
+# --- Certification Signals ---
+_CERTIFICATIONS = {
+    'aws certified', 'azure certified', 'gcp certified', 'cka', 'ckad', 'cks',
+    'terraform associate', 'docker certified', 'cissp', 'ceh', 'security+',
+    'pmp', 'csp', 'csm', 'cspo', 'prince2', 'itil', 'togaf',
+    'databricks', 'google professional', 'microsoft certified',
+}
+
 # Combined set for fast entity extraction
 _TECH_KNOWLEDGE_BASE = (
     _LANGUAGES | _FRAMEWORKS_FRONTEND | _FRAMEWORKS_BACKEND | _CLOUD |
@@ -216,6 +241,48 @@ def _extract_technical_entities(text):
             found.add(stack_name)
     
     return found
+
+def _infer_seniority(text):
+    """Extract seniority level from text (1=junior … 5=exec)."""
+    text_lower = text.lower()
+    levels = []
+    for keyword, level in _SENIORITY.items():
+        if keyword in text_lower:
+            levels.append(level)
+    return round(sum(levels) / len(levels)) if levels else 2  # default = mid
+
+
+def _extract_years(text):
+    """Extract max years of experience requirement from text."""
+    matches = _YOE_PATTERN.findall(text)
+    if matches:
+        return max(int(m) for m in matches)
+    return 0
+
+
+def _extract_education(text):
+    """Return set of education-level signals present in text."""
+    text_lower = text.lower()
+    return {e for e in _EDUCATION if e in text_lower}
+
+
+def _extract_certifications(text):
+    """Return set of certification signals present in text."""
+    text_lower = text.lower()
+    return {c for c in _CERTIFICATIONS if c in text_lower}
+
+
+def get_stop_words():
+    """Legacy stop-word set — kept for backward compatibility."""
+    return {
+        'and', 'the', 'is', 'in', 'to', 'with', 'for', 'a', 'of', 'on', 'as', 'an',
+        'are', 'be', 'this', 'that', 'from', 'by', 'your', 'you', 'we', 'our', 'will',
+        'can', 'or', 'at', 'have', 'has', 'it', 'not', 'all', 'such', 'skills',
+        'experience', 'work', 'job', 'team', 'years', 'looking', 'role', 'must',
+        'strong', 'ability', 'knowledge', 'development', 'design', 'working',
+        'using', 'required', 'preferred',
+    }
+
 
 def _get_technical_category(tech):
     if tech in _LANGUAGES: return 'Programming Language'
@@ -409,3 +476,211 @@ def generate_pdf_report(buffer, user_name, resume_name, ats_score, match_percent
         elements.append(Paragraph("Job description analysis was not performed. Upload a job posting to see specific keyword gaps and recommendations.", normal_style))
         
     doc.build(elements)
+
+
+def _extract_action_verbs(text):
+    """Detects high-impact professional action verbs."""
+    verbs = {
+        'spearheaded', 'orchestrated', 'architected', 'optimized', 'streamlined',
+        'accelerated', 'pioneered', 'implemented', 'designed', 'developed',
+        'automated', 'managed', 'led', 'negotiated', 'transformed', 'delivered',
+        'achieved', 'increased', 'reduced', 'saved', 'mentored', 'coordinated',
+        'maximized', 'authored', 'established', 'facilitated', 'executed'
+    }
+    found = {v for v in verbs if v in text.lower()}
+    return list(found)
+
+def _extract_metrics(text):
+    """Detects quantifiable metrics (percentages, currency, large numbers)."""
+    patterns = [
+        r'\d+%', r'%\s+improvement', r'\$\d+', r'\d+\s*k', r'\d+\s*m',
+        r'increased\s+by\s+\d+', r'reduced\s+by\s+\d+', r'saved\s+\d+', r'managed\s+\d+'
+    ]
+    matches = []
+    for p in patterns:
+        matches.extend(re.findall(p, text.lower()))
+    return list(set(matches))
+
+def _get_partial_matches(missing_skills, resume_skills):
+    """
+    Implements a semantic neighbor check.
+    If a required skill is missing, check if the user has a closely related skill.
+    """
+    clusters = [
+        {'react', 'nextjs', 'next.js', 'redux', 'vue', 'angular', 'svelte'}, # Frontend
+        {'django', 'flask', 'fastapi', 'pyramid', 'backend'}, # Python Backend
+        {'nodejs', 'node.js', 'express', 'nestjs', 'javascript', 'typescript'}, # JS Backend
+        {'aws', 'azure', 'gcp', 'cloud', 'digitalocean', 'lambda', 's3'}, # Cloud
+        {'postgresql', 'postgres', 'mysql', 'sql', 'mariadb', 'oracle', 'sqlite'}, # SQL
+        {'mongodb', 'redis', 'cassandra', 'dynamodb', 'nosql'}, # NoSQL
+        {'docker', 'kubernetes', 'k8s', 'helm', 'containers'}, # Containerization
+        {'terraform', 'ansible', 'pulumi', 'cloudformation', 'iac'}, # IaC
+    ]
+    partials = []
+    for missing in missing_skills:
+        for cluster in clusters:
+            if missing in cluster:
+                # User has a neighbor but not the exact skill
+                neighbors = cluster.intersection(resume_skills)
+                if neighbors:
+                    partials.append({'missing': missing, 'have': list(neighbors)[0]})
+                    break
+    return partials
+
+def generate_smart_cover_letter(resume_text, jd_text, matched_skills):
+    """Generates a high-quality, professional cover letter template."""
+    lines = jd_text.strip().split('\n')
+    job_title = lines[0].replace('Job Description', '').replace('Role:', '').strip()[:50]
+    if not job_title or len(job_title) < 3: job_title = "Technical Professional"
+    
+    skills_slice = [s.title() for s in matched_skills[:3]]
+    if len(skills_slice) >= 3:
+        skills_phrase = f"{skills_slice[0]}, {skills_slice[1]}, and {skills_slice[2]}"
+    elif len(skills_slice) == 2:
+        skills_phrase = f"{skills_slice[0]} and {skills_slice[1]}"
+    else:
+        skills_phrase = skills_slice[0] if skills_slice else "modern software engineering practices"
+
+    template = f"""
+Dear Hiring Manager,
+
+I am writing to formally express my interest in the {job_title} position. After reviewing the requirements, I am confident that my technical background and proactive approach to problem-solving make me an ideal candidate for this role.
+
+My expertise in {skills_phrase} allows me to bridge the gap between complex requirements and scalable solutions. Throughout my journey, I have remained dedicated to maintaining high standards of code quality and architectural integrity, ensuring that deliverables are both robust and efficient.
+
+Specifically, I have a proven track record of collaborating within cross-functional teams to deliver impactful products. My ability to adapt to new environments and master emerging technologies aligns perfectly with the innovative culture at your organization.
+
+I would welcome the opportunity to discuss how my skill set can contribute to your team. Thank you for your consideration, and I look forward to hearing from you.
+
+Best regards,
+[Your Name]
+"""
+    return template.strip()
+
+def _generate_improvement_roadmap(match_data, resume_text, jd_text):
+    """
+    JD-Aware logic to generate a structured, professional improvement roadmap.
+    """
+    roadmap = []
+    
+    # 1. Critical Fixes (High Priority)
+    critical = []
+    missing_tech = match_data.get('missing_skills', [])
+    if missing_tech:
+        top_missing = ", ".join([s.title() for s in missing_tech[:3]])
+        critical.append(f"Add projects or certifications related to <strong>{top_missing}</strong>. These are focal points in the JD.")
+    
+    if match_data.get('tech_score', 100) < 50:
+        critical.append("Your tech stack alignment is below 50%. Focus on bridging the core technical gaps before applying.")
+    
+    if critical:
+        roadmap.append({'title': 'Critical Fixes', 'items': critical, 'priority': 'HIGH', 'color': 'danger'})
+
+    # 2. Strengthen Resume (Mid Priority)
+    strengthen = []
+    partials = match_data.get('partial_matches', [])
+    for p in partials[:2]:
+        strengthen.append(f"Highlight your <strong>{p['have'].title()}</strong> experience more clearly to substitute for the requested <strong>{p['missing'].title()}</strong>.")
+    
+    # JD-specific context detection (Simple pattern matching)
+    jd_lower = jd_text.lower()
+    if 'scale' in jd_lower or 'performance' in jd_lower:
+        strengthen.append("The JD emphasizes system performance. Add details about how you optimized code or handled high traffic.")
+    if 'team' in jd_lower or 'collaborate' in jd_lower:
+        strengthen.append("Collaborative culture detected. Mention cross-functional teamwork or peer code reviews.")
+        
+    if strengthen:
+        roadmap.append({'title': 'Strengthen Alignment', 'items': strengthen, 'priority': 'MEDIUM', 'color': 'warning'})
+
+    # 3. Content & Verb Optimization
+    optimize = []
+    verbs = match_data.get('verb_list', [])
+    if len(verbs) < 5:
+        optimize.append("Replace passive phrases like 'worked on' or 'helped with' with stronger verbs like <strong>'Architected'</strong> or <strong>'Spearheaded'</strong>.")
+    else:
+        optimize.append("Good use of action verbs. Ensure they are placed at the start of each bullet point for maximum impact.")
+        
+    roadmap.append({'title': 'Content Optimization', 'items': optimize, 'priority': 'LOW', 'color': 'primary'})
+
+    # 4. Quantifiable Impact
+    impact = []
+    metrics = match_data.get('metric_list', [])
+    if len(metrics) < 3:
+        impact.append("Missing metrics. Add quantifiable results like <strong>'% improvement'</strong> or <strong>'time saved'</strong> to validate your achievements.")
+    else:
+        impact.append("Metrics detected! Ensure these are highlighted in your most recent experience section.")
+        
+    roadmap.append({'title': 'Quantifiable Impact', 'items': impact, 'priority': 'MEDIUM', 'color': 'success'})
+
+    # 5. Keyword Injection
+    keywords = []
+    jd_words = set(re.findall(r'\b[a-z]{4,}\b', jd_text.lower()))
+    resume_words = set(re.findall(r'\b[a-z]{4,}\b', resume_text.lower()))
+    missing_keywords = list(jd_words - resume_words - set(get_stop_words()))[:6]
+    
+    if missing_keywords:
+        kw_list = ", ".join([k.title() for k in missing_keywords])
+        keywords.append(f"Naturally integrate these keywords: <strong>{kw_list}</strong> into your Professional Summary.")
+        
+    roadmap.append({'title': 'Keyword Injection', 'items': keywords, 'priority': 'LOW', 'color': 'info'})
+
+    return roadmap
+
+def analyze_smart_assistant(job_match):
+    """
+    Advanced technical analysis engine. 
+    70% Semantic Tech Match | 15% Verbs | 15% Metrics
+    """
+    resume_text = job_match.resume.analysis.extracted_text
+    jd_text = job_match.job_description
+    
+    # Base Tech Analysis
+    tech_pct, matched_tech, missing_tech, _ = match_job_description(resume_text, jd_text)
+    
+    # Semantic Intelligence
+    partials = _get_partial_matches(missing_tech, _extract_technical_entities(resume_text))
+    boost = min(len(partials) * 2, 10)
+    adjusted_tech = min(tech_pct + boost, 100)
+    
+    # Action Verbs
+    verbs = _extract_action_verbs(resume_text)
+    verb_score = min((len(verbs) / 12) * 100, 100)
+    
+    # Metrics
+    metrics = _extract_metrics(resume_text)
+    metric_score = min((len(metrics) / 6) * 100, 100)
+    
+    # Final Formula
+    raw_smart_score = (adjusted_tech * 0.70) + (verb_score * 0.15) + (metric_score * 0.15)
+    
+    match_data = {
+        'tech_score': int(adjusted_tech),
+        'verb_score': int(verb_score),
+        'metric_score': int(metric_score),
+        'matched_skills': matched_tech,
+        'missing_skills': missing_tech,
+        'partial_matches': partials,
+        'verb_list': verbs[:8],
+        'metric_list': metrics[:6]
+    }
+    
+    # Generate the Smart Roadmap
+    roadmap = _generate_improvement_roadmap(match_data, resume_text, jd_text)
+    
+    return {
+        'smart_score': int(raw_smart_score),
+        'tech_score': match_data['tech_score'],
+        'verb_score': match_data['verb_score'],
+        'metric_score': match_data['metric_score'],
+        'verb_count': len(verbs),
+        'metric_count': len(metrics),
+        'matched_skills': matched_tech,
+        'missing_skills': missing_tech,
+        'partial_matches': partials[:3],
+        'cover_letter': generate_smart_cover_letter(resume_text, jd_text, matched_tech),
+        'verb_list': match_data['verb_list'],
+        'metric_list': match_data['metric_list'],
+        'roadmap': roadmap
+    }
+
+

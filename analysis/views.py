@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from resume.models import Resume
 from .models import AnalysisReport
 from .forms import JobDescriptionForm
-from .utils import extract_text_from_pdf, calculate_ats_score, extract_skills, match_job_description
+from .utils import extract_text_from_pdf, calculate_ats_score, extract_skills, match_job_description, analyze_smart_assistant
 
 @login_required
 def analyze_resume(request, resume_id):
@@ -105,3 +105,17 @@ def status_job_match(request, match_id):
     from .models import JobMatchResult
     match = get_object_or_404(JobMatchResult, id=match_id, resume__user=request.user)
     return JsonResponse({'status': match.status, 'error': match.error_message})
+
+@login_required
+def smart_job_assistant(request, match_id):
+    from .models import JobMatchResult
+    match = get_object_or_404(JobMatchResult, id=match_id, resume__user=request.user)
+    
+    # Analyze using the new smart engine
+    analysis = analyze_smart_assistant(match)
+    
+    context = {
+        'match': match,
+        'analysis': analysis,
+    }
+    return render(request, 'analysis/smart_assistant.html', context)

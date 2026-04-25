@@ -96,8 +96,11 @@
                             </div>
                         {% endif %}
                         
-                        <a href="{% url 'download_pdf_report' resume.id %}" class="btn btn-outline-primary mt-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="border-radius: 8px;">
+                        <a href="{% url 'download_pdf_report' resume.id %}" class="btn btn-outline-primary mt-2 flex-shrink-0 d-flex align-items-center justify-content-center w-100 mb-2" style="border-radius: 8px;">
                             <i class="bi bi-download me-2"></i> Download ATS Report
+                        </a>
+                        <a href="{% url 'smart_job_assistant' latest_match.id %}" class="btn btn-primary flex-shrink-0 d-flex align-items-center justify-content-center w-100" style="border-radius: 8px;">
+                            <i class="bi bi-stars me-2"></i> Smart Job Assistant
                         </a>
                     </div>
                     
