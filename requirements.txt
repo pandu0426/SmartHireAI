@@ -5,3 +5,5 @@ crispy-bootstrap5==2024.2
 gunicorn==21.2.0
 reportlab==4.0.9
 python-dotenv
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0

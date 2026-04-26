@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Load .env file for local development (safe no-op in production)
 try:
@@ -84,15 +85,33 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smarthire.wsgi.application'
 
 
-# Database
+# Database Configuration
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Use PostgreSQL (Production/Render)
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+    print(f"LOG: [DB] Using PostgreSQL (DATABASE_URL detected)")
+elif os.environ.get('RENDER'):
+    # We are on Render but DATABASE_URL is missing! 
+    # This is a critical error state for production.
+    raise Exception("CRITICAL: DATABASE_URL is missing in Render environment!")
+else:
+    # Fallback to SQLite (Local Development)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("LOG: [DB] Using SQLite (Local fallback)")
 
 
 # Password validation
