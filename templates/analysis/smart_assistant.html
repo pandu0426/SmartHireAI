@@ -6,45 +6,47 @@
     <!-- Compact Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-0" style="letter-spacing: -0.03em;">Smart Assistant</h2>
-            <p class="text-muted small mb-0">Personalized career coaching and ATS optimization.</p>
+            <h2 class="fw-bold mb-0" style="letter-spacing: -0.03em; color: #1e293b;">Smart Assistant</h2>
+            <p class="text-muted small mb-0">Actionable career guidance and job alignment analysis.</p>
         </div>
-        <a href="{% url 'job_match' match.resume.id %}" class="btn btn-sm btn-outline-secondary px-3">
+        <a href="{% url 'job_match' match.resume.id %}" class="btn btn-sm btn-outline-primary px-3 rounded-pill">
             <i class="bi bi-arrow-left me-1"></i> Dashboard
         </a>
     </div>
 
-    <!-- Production-Level Score Card (Horizontal & Compact) -->
-    <div class="card card-custom mb-4 overflow-hidden border-0 shadow-sm">
-        <div class="row g-0 align-items-center">
-            <div class="col-md-3 bg-primary text-white p-4 text-center">
-                <div class="small opacity-75 text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">Smart Fit</div>
-                <div class="display-5 fw-bold">{{ analysis.smart_score }}%</div>
-            </div>
-            <div class="col-md-9 p-4">
-                <div class="row g-4 align-items-center">
-                    <div class="col-lg-6">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small fw-bold text-muted">Overall Alignment Progress</span>
-                            <span class="small fw-bold text-primary">{{ analysis.smart_score }}%</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-primary" style="width: {{ analysis.smart_score }}%"></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="row text-center g-2">
-                            <div class="col-4 border-end">
-                                <div class="fw-bold text-dark">{{ analysis.tech_score }}%</div>
-                                <div class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">Tech Stack</div>
+    <!-- Compact Ribbon Header -->
+    <div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="row g-0 align-items-center">
+                <div class="col-md-2 bg-primary text-white p-4 text-center">
+                    <div class="small opacity-75 text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.1em;">Smart Fit</div>
+                    <div class="h2 fw-bold mb-0">{{ analysis.smart_score }}%</div>
+                </div>
+                <div class="col-md-10 p-3 px-4">
+                    <div class="row align-items-center g-3">
+                        <div class="col-lg-5">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small fw-bold text-secondary">Overall Alignment</span>
+                                <span class="small fw-bold text-primary">{{ analysis.smart_score }}%</span>
                             </div>
-                            <div class="col-4 border-end">
-                                <div class="fw-bold text-dark">{{ analysis.verb_score }}%</div>
-                                <div class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">Verbs</div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: {{ analysis.smart_score }}%"></div>
                             </div>
-                            <div class="col-4">
-                                <div class="fw-bold text-dark">{{ analysis.metric_score }}%</div>
-                                <div class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">Metrics</div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="row text-center g-0">
+                                <div class="col-4 border-end">
+                                    <div class="fw-bold text-dark h5 mb-0">{{ analysis.tech_score }}%</div>
+                                    <div class="text-muted small text-uppercase fw-semibold" style="font-size: 0.6rem;">Tech Stack</div>
+                                </div>
+                                <div class="col-4 border-end">
+                                    <div class="fw-bold text-dark h5 mb-0">{{ analysis.verb_score }}%</div>
+                                    <div class="text-muted small text-uppercase fw-semibold" style="font-size: 0.6rem;">Verbs</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-dark h5 mb-0">{{ analysis.metric_score }}%</div>
+                                    <div class="text-muted small text-uppercase fw-semibold" style="font-size: 0.6rem;">Metrics</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -54,131 +56,116 @@
     </div>
 
     <div class="row g-4">
-        <!-- Left Analysis Pane -->
+        <!-- LEFT COLUMN: Analysis & Roadmap -->
         <div class="col-lg-7">
-            <!-- 2-Column Technical Alignment -->
-            <div class="card card-custom mb-4">
-                <div class="card-header bg-white py-3 border-bottom-0">
-                    <h6 class="fw-bold mb-0">Technical Alignment Matrix</h6>
+            <!-- Technical Alignment Matrix -->
+            <div class="card border-0 shadow-sm mb-4 rounded-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h6 class="fw-bold mb-0 text-dark">Technical Alignment Matrix</h6>
                 </div>
                 <div class="card-body pt-0">
-                    <div class="row g-4">
+                    <div class="row g-3">
                         <div class="col-md-6 border-end">
-                            <label class="text-success small fw-bold text-uppercase mb-2 d-block" style="font-size: 0.65rem;">Direct Matches</label>
+                            <label class="text-success small fw-bold text-uppercase mb-2 d-block" style="font-size: 0.6rem; letter-spacing: 0.05em;">✅ Direct Matches</label>
                             <div class="d-flex flex-wrap gap-2">
                                 {% for skill in analysis.matched_skills %}
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-2 px-3 fw-medium" style="font-size: 0.75rem;">{{ skill|title }}</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border-0 py-2 px-3 fw-medium" style="font-size: 0.75rem;">{{ skill|title }}</span>
                                 {% empty %}
                                     <p class="text-muted small italic">No direct matches identified.</p>
                                 {% endfor %}
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-danger small fw-bold text-uppercase mb-2 d-block" style="font-size: 0.65rem;">Gaps & Partials</label>
+                            <label class="text-danger small fw-bold text-uppercase mb-2 d-block" style="font-size: 0.6rem; letter-spacing: 0.05em;">❌ Gaps & Partials</label>
                             <div class="d-flex flex-wrap gap-2">
                                 {% for skill in analysis.missing_skills %}
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-2 px-3 fw-medium" style="font-size: 0.75rem;">{{ skill|title }}</span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border-0 py-2 px-3 fw-medium" style="font-size: 0.75rem;">{{ skill|title }}</span>
                                 {% empty %}
                                     <span class="badge bg-success-subtle text-success px-3 py-2">Full Tech Coverage!</span>
                                 {% endfor %}
                             </div>
-                            {% if analysis.partial_matches %}
-                                <div class="mt-3 p-2 bg-light rounded border border-warning border-opacity-25">
-                                    <div class="text-warning fw-bold mb-1" style="font-size: 0.65rem; text-transform: uppercase;">Partial Overlap Detected</div>
-                                    {% for p in analysis.partial_matches %}
-                                        <div class="text-muted" style="font-size: 0.75rem;">
-                                            <i class="bi bi-info-circle me-1"></i> You have <strong>{{ p.have|title }}</strong> for <strong>{{ p.missing|title }}</strong>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Resume Improvement Roadmap (NEW) -->
-            <div class="mb-2">
-                <h6 class="fw-bold text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.05em;">Resume Improvement Roadmap</h6>
-            </div>
-            
-            {% for section in analysis.roadmap %}
-            <div class="card card-custom mb-3 border-start border-4 border-{{ section.color }}">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold mb-0 text-{{ section.color }}">{{ section.title }}</h6>
-                        <span class="badge rounded-pill bg-{{ section.color }} bg-opacity-10 text-{{ section.color }}" style="font-size: 0.6rem;">{{ section.priority }}</span>
-                    </div>
-                    <ul class="list-unstyled mb-0 ms-1">
-                        {% for item in section.items %}
-                            <li class="mb-2 text-muted" style="font-size: 0.85rem;">
-                                <i class="bi bi-dot me-1 text-{{ section.color }}"></i> {{ item|safe }}
-                            </li>
-                        {% endfor %}
-                    </ul>
+            <!-- Merged Resume Improvement Roadmap -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h6 class="fw-bold mb-0 text-dark">Resume Improvement Roadmap</h6>
+                </div>
+                <div class="card-body pt-0">
+                    {% for section in analysis.roadmap %}
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-{{ section.color }} p-1 me-2" style="width: 8px; height: 8px; border-radius: 50%;"> </span>
+                                <h6 class="fw-bold mb-0 small text-{{ section.color }}">{{ section.title }}</h6>
+                                <span class="ms-auto text-muted" style="font-size: 0.65rem; font-weight: 600;">{{ section.priority }}</span>
+                            </div>
+                            <div class="ps-3 border-start ms-1 pb-1">
+                                {% for item in section.items %}
+                                    <div class="text-muted mb-2" style="font-size: 0.85rem; line-height: 1.5;">
+                                        {{ item|safe }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
         </div>
 
-        <!-- Right Side: Cover Letter -->
+        <!-- RIGHT COLUMN: Tools & Actions -->
         <div class="col-lg-5">
-            <div class="card card-custom border-primary border-opacity-25 sticky-top" style="top: 20px; box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.1);">
-                <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0">Professional Cover Letter</h6>
-                    <span class="badge bg-white text-primary small">Tailored</span>
+            <!-- Recommended Roles & Live Jobs (NEW) -->
+            <div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white py-3 border-0">
+                    <h6 class="fw-bold mb-0">Recommended Roles & Live Jobs</h6>
                 </div>
                 <div class="card-body">
-                    <div id="coverLetterBox" class="bg-light p-4 rounded mb-3" style="white-space: pre-line; max-height: 480px; overflow-y: auto; font-size: 0.85rem; font-family: 'Inter', sans-serif; line-height: 1.6; border: 1px solid #eef2f6;">
-                        {{ analysis.cover_letter }}
-                    </div>
+                    <p class="text-muted small mb-3">Based on your skills, you are a strong fit for these career paths:</p>
                     
-                    <button class="btn btn-primary w-100 py-2 fw-bold" onclick="copyCoverLetter()" id="copyBtn">
-                        <i class="bi bi-clipboard-check me-2"></i> Copy to Clipboard
-                    </button>
-                    
-                    <div id="copyAlert" class="alert alert-success mt-2 d-none py-2 px-3 text-center border-0 small">
-                        <i class="bi bi-check-lg me-1"></i> Copied and ready to use!
-                    </div>
+                    {% for role_data in analysis.recommended_roles %}
+                        <div class="mb-4 p-3 rounded-3 border border-light bg-light bg-opacity-25">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="bi bi-briefcase-fill"></i>
+                                </div>
+                                <h6 class="fw-bold mb-0">{{ role_data.role }}</h6>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <a href="{{ role_data.linkedin }}" target="_blank" class="btn btn-sm btn-outline-primary w-100 text-start px-2" style="font-size: 0.7rem;">
+                                        <i class="bi bi-linkedin me-1"></i> LinkedIn Jobs
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="{{ role_data.indeed }}" target="_blank" class="btn btn-sm btn-outline-dark w-100 text-start px-2" style="font-size: 0.7rem;">
+                                        <i class="bi bi-info-circle me-1"></i> Indeed India
+                                    </a>
+                                </div>
+                                <div class="col-12">
+                                    <a href="{{ role_data.naukri }}" target="_blank" class="btn btn-sm btn-link text-muted w-100 text-center text-decoration-none" style="font-size: 0.7rem;">
+                                        <i class="bi bi-search me-1"></i> View on Naukri.com
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <div class="mt-4 p-3 rounded bg-primary bg-opacity-10 border border-primary border-opacity-10">
-                <h6 class="fw-bold text-primary small mb-1">💡 Coaching Tip</h6>
-                <p class="text-muted mb-0" style="font-size: 0.75rem;">This roadmap is dynamic. Address the <strong>Critical Fixes</strong> first to immediately boost your ATS ranking for this specific JD.</p>
-            </div>
         </div>
     </div>
 </div>
 
-<script>
-function copyCoverLetter() {
-    const text = `{{ analysis.cover_letter|escapejs }}`;
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById('copyBtn');
-        const alert = document.getElementById('copyAlert');
-        
-        btn.classList.replace('btn-primary', 'btn-success');
-        alert.classList.remove('d-none');
-        
-        setTimeout(() => {
-            btn.classList.replace('btn-success', 'btn-primary');
-            alert.classList.add('d-none');
-        }, 3000);
-    });
-}
-</script>
-
 <style>
-    .circular-chart { display: block; margin: 10px auto; max-width: 100%; max-height: 100%; }
-    .circle-bg { stroke: #f1f5f9; }
-    .circle { animation: progress 1s ease-out forwards; }
-    @keyframes progress { from { stroke-dasharray: 0, 100; } }
-    .progress { background-color: #f1f5f9; border-radius: 100px; }
+    body { background-color: #f8fafc; }
+    .progress { background-color: #e2e8f0; border-radius: 100px; }
     .progress-bar { border-radius: 100px; }
-    .badge { border-radius: 6px; }
-    #coverLetterBox::-webkit-scrollbar { width: 4px; }
-    #coverLetterBox::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .card-custom { border-radius: 12px; }
+    .badge { border-radius: 8px; }
+    .card { transition: transform 0.2s ease; }
+    .btn-outline-primary:hover { background-color: #3b82f6; color: white; }
+    .border-light { border-color: #f1f5f9 !important; }
 </style>
 {% endblock %}

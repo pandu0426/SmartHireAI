@@ -527,35 +527,6 @@ def _get_partial_matches(missing_skills, resume_skills):
                     break
     return partials
 
-def generate_smart_cover_letter(resume_text, jd_text, matched_skills):
-    """Generates a high-quality, professional cover letter template."""
-    lines = jd_text.strip().split('\n')
-    job_title = lines[0].replace('Job Description', '').replace('Role:', '').strip()[:50]
-    if not job_title or len(job_title) < 3: job_title = "Technical Professional"
-    
-    skills_slice = [s.title() for s in matched_skills[:3]]
-    if len(skills_slice) >= 3:
-        skills_phrase = f"{skills_slice[0]}, {skills_slice[1]}, and {skills_slice[2]}"
-    elif len(skills_slice) == 2:
-        skills_phrase = f"{skills_slice[0]} and {skills_slice[1]}"
-    else:
-        skills_phrase = skills_slice[0] if skills_slice else "modern software engineering practices"
-
-    template = f"""
-Dear Hiring Manager,
-
-I am writing to formally express my interest in the {job_title} position. After reviewing the requirements, I am confident that my technical background and proactive approach to problem-solving make me an ideal candidate for this role.
-
-My expertise in {skills_phrase} allows me to bridge the gap between complex requirements and scalable solutions. Throughout my journey, I have remained dedicated to maintaining high standards of code quality and architectural integrity, ensuring that deliverables are both robust and efficient.
-
-Specifically, I have a proven track record of collaborating within cross-functional teams to deliver impactful products. My ability to adapt to new environments and master emerging technologies aligns perfectly with the innovative culture at your organization.
-
-I would welcome the opportunity to discuss how my skill set can contribute to your team. Thank you for your consideration, and I look forward to hearing from you.
-
-Best regards,
-[Your Name]
-"""
-    return template.strip()
 
 def _generate_improvement_roadmap(match_data, resume_text, jd_text):
     """
@@ -626,6 +597,48 @@ def _generate_improvement_roadmap(match_data, resume_text, jd_text):
 
     return roadmap
 
+def _identify_recommended_roles(skills):
+    """
+    Maps detected skills to 3-5 entry-level job roles.
+    """
+    role_mapping = {
+        'Python Developer': ['python', 'django', 'flask', 'fastapi'],
+        'Backend Developer': ['python', 'java', 'node.js', 'sql', 'postgresql', 'api', 'rest'],
+        'Frontend Developer': ['javascript', 'react', 'vue', 'angular', 'html', 'css', 'typescript'],
+        'Full Stack Developer': ['python', 'javascript', 'react', 'django', 'node.js', 'sql'],
+        'Data Analyst': ['python', 'sql', 'pandas', 'numpy', 'data analysis', 'excel', 'tableau'],
+        'DevOps Specialist': ['docker', 'kubernetes', 'aws', 'linux', 'ci/cd', 'terraform', 'ansible'],
+    }
+    
+    recommended = []
+    skills_lower = [s.lower() for s in skills]
+    
+    for role, required in role_mapping.items():
+        # If user has at least 2 matching skills for a role, recommend it
+        match_count = len([s for s in required if s in skills_lower])
+        if match_count >= 2:
+            recommended.append(role)
+            
+    # Default fallback if no roles matched
+    if not recommended:
+        recommended = ['Software Engineer', 'Technical Associate']
+        
+    return recommended[:4]
+
+def _generate_job_links(role):
+    """
+    Generates dynamic search URLs for major job boards.
+    """
+    import urllib.parse
+    query = urllib.parse.quote(f"{role} fresher india")
+    
+    return {
+        'role': role,
+        'linkedin': f"https://www.linkedin.com/jobs/search/?keywords={query}",
+        'indeed': f"https://in.indeed.com/jobs?q={query}",
+        'naukri': f"https://www.naukri.com/{role.lower().replace(' ', '-')}-jobs"
+    }
+
 def analyze_smart_assistant(job_match):
     """
     Advanced technical analysis engine. 
@@ -667,6 +680,11 @@ def analyze_smart_assistant(job_match):
     # Generate the Smart Roadmap
     roadmap = _generate_improvement_roadmap(match_data, resume_text, jd_text)
     
+    # Generate Role Recommendations
+    all_skills = list(set(matched_tech) | set(_extract_technical_entities(resume_text)))
+    recommended_roles = _identify_recommended_roles(all_skills)
+    job_opportunities = [_generate_job_links(role) for role in recommended_roles]
+    
     return {
         'smart_score': int(raw_smart_score),
         'tech_score': match_data['tech_score'],
@@ -677,10 +695,10 @@ def analyze_smart_assistant(job_match):
         'matched_skills': matched_tech,
         'missing_skills': missing_tech,
         'partial_matches': partials[:3],
-        'cover_letter': generate_smart_cover_letter(resume_text, jd_text, matched_tech),
         'verb_list': match_data['verb_list'],
         'metric_list': match_data['metric_list'],
-        'roadmap': roadmap
+        'roadmap': roadmap,
+        'recommended_roles': job_opportunities
     }
 
 
