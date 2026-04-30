@@ -15,33 +15,85 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 def calculate_ats_score(text):
+    """Legacy wrapper for backward compatibility."""
+    return calculate_ats_score_v2(text)
+
+def calculate_ats_score_v2(text):
     """
-    A simulated ATS scoring algorithm.
-    Checks for common resume sections and standard keywords.
+    Advanced ATS Scoring Engine (v2).
+    A multi-factor weighted index (0-100):
+    - Relevance (40%): Skill density and technical depth
+    - Impact (30%): Action verbs and measurable achievements
+    - Structure (20%): Layout friendliness and section coverage
+    - Presence (10%): Contact accessibility and professional links
     """
-    score = 40 # Base score
+    if not text or not text.strip():
+        return 0
 
     text_lower = text.lower()
+    words = text.split()
+    total_words = len(words)
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+    # --- 1. Relevance (40 pts) ---
+    # Measure technical entity density against a professional baseline (approx 12 skills)
+    tech_entities = _extract_technical_entities(text)
+    relevance_score = min((len(tech_entities) / 12) * 40, 40)
     
-    # Check for sections
-    sections = ['education', 'experience', 'skills', 'projects', 'summary', 'objective']
-    for section in sections:
-        if section in text_lower:
-            score += 5
-            
-    # Check for quantifiable bullet points (simulated by checking for numbers/digits)
-    if re.search(r'\d+', text):
-        score += 10
+    # Keyword stuffing penalty (If > 20% of words are tech keywords, it looks unnatural)
+    if total_words > 50:
+        density = len(tech_entities) / total_words
+        if density > 0.20:
+            relevance_score *= 0.7  # 30% penalty for stuffing
+
+    # --- 2. Impact (30 pts) ---
+    # A. Action Verb Detection (Check if lines start with impact verbs)
+    impact_verbs = {'developed', 'built', 'designed', 'spearheaded', 'managed', 'implemented', 'optimized', 'led', 'created', 'automated'}
+    verb_hits = 0
+    for line in lines[:50]: # Scan first 50 lines
+        first_word = re.sub(r'[^a-zA-Z]', '', line.split()[0].lower()) if line.split() else ""
+        if first_word in impact_verbs:
+            verb_hits += 1
+    
+    # B. Metric Detection (Numbers followed by units)
+    metric_patterns = [r'\d+%', r'\$\d+', r'\d+\s*(?:years?|yrs?|users?|projects?|employees?|clients?)']
+    metrics_found = 0
+    for pattern in metric_patterns:
+        metrics_found += len(re.findall(pattern, text_lower))
+    
+    impact_score = min((verb_hits * 4) + (metrics_found * 6), 30)
+
+    # --- 3. Structure (20 pts) ---
+    # A. Section Coverage
+    core_sections = ['education', 'experience', 'skills', 'projects', 'summary']
+    sections_found = sum(1 for s in core_sections if s in text_lower)
+    
+    # B. Layout Heuristics
+    # Check for excessive short lines (often indicates complex columns/graphics)
+    short_lines = sum(1 for line in lines if len(line) < 15)
+    layout_penalty = 0
+    if len(lines) > 10 and (short_lines / len(lines)) > 0.5:
+        layout_penalty = 5 # Penalty for potentially unreadable layout
         
-    # Check length
-    word_count = len(text.split())
-    if 300 < word_count < 1000:
-        score += 10
-    elif word_count >= 1000:
-        score -= 5 # too long
-        
-    # Cap at 100
-    return min(score, 100)
+    structure_score = max((sections_found * 4) - layout_penalty, 0)
+
+    # --- 4. Presence (10 pts) ---
+    # Validate contact info and professional profiles
+    has_email = 1 if re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text) else 0
+    has_phone = 1 if re.search(r'\+?\d{10,15}', text) else 0
+    has_linkedin = 1 if 'linkedin.com' in text_lower else 0
+    has_github = 1 if 'github.com' in text_lower else 0
+    
+    presence_score = (has_email * 2.5) + (has_phone * 2.5) + (has_linkedin * 2.5) + (has_github * 2.5)
+
+    # Final Computation
+    total_score = relevance_score + impact_score + structure_score + presence_score
+    
+    # Length Correction (Global)
+    if total_words < 200: total_score *= 0.8 # Too brief
+    if total_words > 1500: total_score *= 0.9 # Too verbose
+    
+    return min(int(total_score), 100)
 
 def extract_skills(text):
     """
@@ -371,109 +423,163 @@ def match_job_description(resume_text, job_desc):
     return match_percentage, matched_list, missing_list, suggestions[:6]
 
 def generate_resume_feedback(text):
-    """Analyze resume text and give feedback on weak areas"""
+    """
+    Advanced Professional Feedback Engine.
+    Provides targeted advice based on structural and linguistic gaps.
+    """
     feedback = []
     text_lower = text.lower()
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
     
-    if not re.search(r'\d+', text):
-        feedback.append("<strong>Lack of Metrics:</strong> No numbers detected. Quantify your achievements (e.g., team size, budgets, percentages).")
-        
-    if 'project' not in text_lower:
-        feedback.append("<strong>Missing Projects:</strong> Consider adding a 'Projects' section to showcase practical applications of your skills.")
-        
-    word_count = len(text.split())
-    if word_count < 250:
-        feedback.append("<strong>Brief Content:</strong> Your resume seems too short. Expand on your responsibilities and achievements.")
-        
-    if 'education' not in text_lower:
-        feedback.append("<strong>Missing Education:</strong> Ensure your educational background is clearly labeled.")
-        
+    # 1. Structural Auditing
+    core_sections = {
+        'education': 'Missing <b>Education</b> section. Recruiters use this to verify your qualifications.',
+        'experience': 'Missing <b>Professional Experience</b>. This is the most critical section for ATS ranking.',
+        'skills': 'No <b>Skills</b> section detected. Group your technical expertise for better readability.',
+        'projects': 'Missing <b>Projects</b>. Use this section to prove your skills with real-world examples.'
+    }
+    for key, msg in core_sections.items():
+        if key not in text_lower:
+            feedback.append(f"<strong>Structural Gap:</strong> {msg}")
+
+    # 2. Impact & Action Verbs
+    impact_verbs = {'developed', 'built', 'designed', 'spearheaded', 'managed', 'implemented', 'optimized', 'led'}
+    verb_count = 0
+    for line in lines[:50]:
+        first_word = re.sub(r'[^a-zA-Z]', '', line.split()[0].lower()) if line.split() else ""
+        if first_word in impact_verbs:
+            verb_count += 1
+    
+    if verb_count < 4:
+        feedback.append("<strong>Weak Phrasing:</strong> Many bullet points don't start with <b>Action Verbs</b>. Use words like <i>Spearheaded</i> or <i>Optimized</i> to show leadership.")
+
+    # 3. Measurable Results
+    if not re.search(r'\d+%', text) and not re.search(r'\$\d+', text):
+        feedback.append("<strong>Static Content:</strong> No quantifiable metrics detected (%, $). Professional resumes should show <b>measurable impact</b>.")
+
+    # 4. Professional Presence
+    if 'linkedin.com' not in text_lower:
+        feedback.append("<strong>Missing LinkedIn:</strong> Include your profile link. 87% of recruiters use LinkedIn to vet candidates.")
+    
+    if 'github.com' not in text_lower and any(tech in text_lower for tech in ['python', 'javascript', 'java']):
+        feedback.append("<strong>Missing GitHub:</strong> For technical roles, a GitHub link acts as a live portfolio.")
+
+    # 5. ATS Layout Friendliness
+    short_lines = sum(1 for line in lines if len(line) < 15)
+    if len(lines) > 10 and (short_lines / len(lines)) > 0.45:
+        feedback.append("<strong>Layout Warning:</strong> Excessive short lines detected. Avoid <b>multi-column layouts</b> or graphics that can confuse older ATS parsers.")
+
+    # Fallback
     if not feedback:
-        feedback.append("<strong>Solid Foundation:</strong> Your resume hits the basic structural requirements. Focus on keyword optimization next!")
+        feedback.append("<strong>Excellent Profile:</strong> Your resume follows professional standards. Focus on tailoring it to specific job descriptions next!")
         
-    return feedback
+    return feedback[:6]
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-def generate_pdf_report(buffer, user_name, resume_name, ats_score, match_percentage, matched_skills, missing_skills, suggestions):
+def generate_pdf_report(buffer, user_name, resume_name, ats_score, match_percentage, matched_skills, missing_skills, suggestions, feedback=None, action_verbs=None, metrics=None):
     """
-    Generates a professional PDF report containing the resume analysis and job match results.
+    Generates a premium Resume Intelligence PDF Report.
     """
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+    from reportlab.lib.units import inch
+    
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     styles = getSampleStyleSheet()
     
+    # Custom Palette
+    primary = colors.HexColor('#3b82f6')
+    dark = colors.HexColor('#0f172a')
+    muted = colors.HexColor('#64748b')
+    bg_light = colors.HexColor('#f8fafc')
+    success = colors.HexColor('#10b981')
+    
     # Custom Styles
-    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=24, spaceAfter=20, textColor=colors.HexColor('#0f172a'))
-    subtitle_style = ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, spaceAfter=20, textColor=colors.HexColor('#64748b'))
-    heading_style = ParagraphStyle('HeadingStyle', parent=styles['Heading2'], fontSize=16, spaceBefore=20, spaceAfter=10, textColor=colors.HexColor('#3b82f6'))
-    normal_style = styles['Normal']
-    list_style = ParagraphStyle('ListStyle', parent=styles['Normal'], leftIndent=20, spaceAfter=5)
+    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=28, spaceAfter=10, textColor=dark, fontName='Helvetica-Bold')
+    subtitle_style = ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=11, spaceAfter=25, textColor=muted)
+    section_title = ParagraphStyle('SectionTitle', parent=styles['Heading2'], fontSize=16, spaceBefore=25, spaceAfter=15, textColor=primary, fontName='Helvetica-Bold')
+    card_title = ParagraphStyle('CardTitle', parent=styles['Normal'], fontSize=10, textColor=muted, alignment=1, fontName='Helvetica-Bold', spaceAfter=5)
+    card_value = ParagraphStyle('CardValue', parent=styles['Normal'], fontSize=22, textColor=dark, alignment=1, fontName='Helvetica-Bold')
+    bullet_style = ParagraphStyle('BulletStyle', parent=styles['Normal'], fontSize=10, leftIndent=15, spaceAfter=12, leading=16, textColor=colors.HexColor('#334155'))
+    tag_style = ParagraphStyle('TagStyle', parent=styles['Normal'], fontSize=9, textColor=dark, leading=14)
     
     elements = []
     
-    # Header
-    elements.append(Paragraph(f"SmartHireAI ATS Report", title_style))
-    elements.append(Paragraph(f"Prepared for: <b>{user_name}</b> | Resume file: {resume_name}", subtitle_style))
-    elements.append(Spacer(1, 20))
+    # --- Header ---
+    elements.append(Paragraph("Resume Intelligence Report", title_style))
+    elements.append(Paragraph(f"<b>Candidate:</b> {user_name}  |  <b>Document:</b> {resume_name}  |  <b>Report Date:</b> {re.sub(r' .*', '', str(colors.black))}", subtitle_style))
+    elements.append(Spacer(1, 10))
     
-    # Overview Score Table
-    data = [
-        ['Overall ATS Score', 'Job Description Match'],
-        [f'{ats_score}/100', f'{match_percentage}%' if match_percentage is not None else 'N/A']
+    # --- Score Overview Table (Modern Cards) ---
+    score_data = [
+        [Paragraph("ATS COMPATIBILITY", card_title), Paragraph("JOB MATCH SCORE", card_title)],
+        [Paragraph(f"{ats_score}/100", card_value), Paragraph(f"{match_percentage}%" if match_percentage is not None else "N/A", card_value)]
     ]
-    t = Table(data, colWidths=[250, 250])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f5f9')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#0f172a')),
+    score_table = Table(score_data, colWidths=[2.8*inch, 2.8*inch])
+    score_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), bg_light),
+        ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 15),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 15),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 12),
-        ('BOTTOMPADDING', (0,0), (-1,0), 10),
-        ('BACKGROUND', (0,1), (-1,1), colors.white),
-        ('TEXTCOLOR', (0,1), (-1,1), colors.HexColor('#3b82f6')),
-        ('FONTNAME', (0,1), (-1,1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,1), (-1,1), 18),
-        ('TOPPADDING', (0,1), (-1,1), 15),
-        ('BOTTOMPADDING', (0,1), (-1,1), 15),
-        ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1'))
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ]))
-    elements.append(t)
-    elements.append(Spacer(1, 30))
-    
-    if match_percentage is not None:
-        # Keywords Section
-        elements.append(Paragraph("Keyword Analysis", heading_style))
-        
-        # Matched Skills
-        elements.append(Paragraph("<b>✅ Matched Keywords:</b>", normal_style))
-        if matched_skills:
-            matched_str = ", ".join([word.title() for word in matched_skills])
-            elements.append(Paragraph(matched_str, list_style))
-        else:
-            elements.append(Paragraph("None detected.", list_style))
+    elements.append(score_table)
+    elements.append(Spacer(1, 20))
+
+    # --- Intelligence Audit (Action Verbs & Metrics) ---
+    if action_verbs or metrics:
+        elements.append(Paragraph("Linguistic Intelligence Audit", section_title))
+        audit_data = [
+            [Paragraph(f"<b>{len(action_verbs) if action_verbs else 0}</b> Impact Verbs Found", tag_style), 
+             Paragraph(f"<b>{len(metrics) if metrics else 0}</b> Measurable Metrics", tag_style)]
+        ]
+        audit_table = Table(audit_data, colWidths=[2.8*inch, 2.8*inch])
+        audit_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#eff6ff')),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#bfdbfe')),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('PADDING', (0,0), (-1,-1), 8),
+        ]))
+        elements.append(audit_table)
         elements.append(Spacer(1, 10))
-            
-        # Missing Skills
-        elements.append(Paragraph("<b>❌ Missing Keywords to Add:</b>", normal_style))
-        if missing_skills:
-            missing_str = ", ".join([word.title() for word in missing_skills])
-            elements.append(Paragraph(missing_str, list_style))
-        else:
-            elements.append(Paragraph("Perfect! No major keywords missing.", list_style))
-        elements.append(Spacer(1, 30))
-        
-        # Improvement Suggestions
-        elements.append(Paragraph("Recommendations to Improve Resume", heading_style))
-        for item in suggestions:
-            # remove html tags manually for pdf parsing
+
+    # --- Improvement Roadmap (The main focus) ---
+    elements.append(Paragraph("Actionable Improvement Roadmap", section_title))
+    if feedback:
+        for i, item in enumerate(feedback, 1):
             clean_item = re.sub(r'<[^>]+>', '', item)
-            elements.append(Paragraph(f"• {clean_item}", list_style))
-            
+            elements.append(Paragraph(f"<b>{i}.</b> {clean_item}", bullet_style))
     else:
-        elements.append(Paragraph("Job description analysis was not performed. Upload a job posting to see specific keyword gaps and recommendations.", normal_style))
+        elements.append(Paragraph("• Continue optimizing your resume with quantifiable metrics.", bullet_style))
+
+    # --- Technical Skills Gap (If Job Match exists) ---
+    if match_percentage is not None:
+        elements.append(Paragraph("Keyword Gap Analysis", section_title))
+        
+        # Missing Keywords
+        elements.append(Paragraph("<b>Priority Keywords to Integrate:</b>", tag_style))
+        if missing_skills:
+            missing_str = ", ".join([word.title() for word in missing_skills[:12]])
+            elements.append(Paragraph(missing_str, ParagraphStyle('SmallStyle', fontSize=10, textColor=muted, spaceBefore=5)))
+        else:
+            elements.append(Paragraph("Excellent! No major technical gaps found.", ParagraphStyle('SmallStyle', fontSize=10, textColor=success, spaceBefore=5)))
+            
+        elements.append(Spacer(1, 15))
+        
+        # Strategic Advice
+        elements.append(Paragraph("<b>Strategic Recommendation:</b>", tag_style))
+        for item in suggestions[:3]:
+            clean_item = re.sub(r'<[^>]+>', '', item)
+            elements.append(Paragraph(f"• {clean_item}", ParagraphStyle('AdviceStyle', fontSize=9, textColor=muted, spaceBefore=5)))
+            
+    # --- Footer ---
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("<i>This report was generated by SmartHireAI Intelligence Engine v2.0. Recommended for professional use only.</i>", 
+                             ParagraphStyle('Footer', fontSize=8, textColor=muted, alignment=1)))
         
     doc.build(elements)
 

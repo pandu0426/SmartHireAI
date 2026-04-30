@@ -15,9 +15,18 @@ def analyze_resume(request, resume_id):
         if report.status == 'processing' or report.status == 'pending' or report.status == 'failed':
             return render(request, 'analysis/processing_report.html', {'resume': resume, 'report': report})
             
+        # Calculate feedback and detailed intelligence on the fly
+        from .utils import generate_resume_feedback, _extract_action_verbs, _extract_metrics
+        feedback = generate_resume_feedback(report.extracted_text)
+        action_verbs = _extract_action_verbs(report.extracted_text)
+        metrics = _extract_metrics(report.extracted_text)
+        
         context = {
             'resume': resume,
             'report': report,
+            'feedback': feedback,
+            'action_verbs': action_verbs,
+            'metrics': metrics,
         }
         return render(request, 'analysis/ats_report.html', context)
     else:
@@ -74,6 +83,12 @@ def download_pdf_report(request, resume_id):
     missing = last_match.missing_keywords if last_match else []
     suggestions = last_match.suggestions if last_match else []
     
+    # Deep Analysis for PDF
+    from .utils import generate_resume_feedback, _extract_action_verbs, _extract_metrics
+    feedback = generate_resume_feedback(report.extracted_text)
+    verbs = _extract_action_verbs(report.extracted_text)
+    metrics = _extract_metrics(report.extracted_text)
+    
     # Generate PDF in memory
     buffer = io.BytesIO()
     generate_pdf_report(
@@ -84,11 +99,14 @@ def download_pdf_report(request, resume_id):
         match_percentage=match_pct,
         matched_skills=matched,
         missing_skills=missing,
-        suggestions=suggestions
+        suggestions=suggestions,
+        feedback=feedback,
+        action_verbs=verbs,
+        metrics=metrics
     )
     buffer.seek(0)
     
-    filename = f"SmartHire_ATS_Report_{request.user.username}.pdf"
+    filename = f"SmartHire_Intelligence_Report_{request.user.username}.pdf"
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 from django.http import JsonResponse

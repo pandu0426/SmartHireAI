@@ -1,7 +1,7 @@
 import logging
 from resume.models import Resume
 from analysis.models import AnalysisReport, JobMatchResult
-from analysis.utils import extract_text_from_pdf, calculate_ats_score, extract_skills, match_job_description, generate_resume_feedback
+from analysis.utils import extract_text_from_pdf, calculate_ats_score_v2, extract_skills, match_job_description, generate_resume_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def process_resume_task(report_id):
             score = 0
             skills = []
         else:
-            score = calculate_ats_score(text)
+            score = calculate_ats_score_v2(text)
             skills = extract_skills(text)
         
         report.extracted_text = text

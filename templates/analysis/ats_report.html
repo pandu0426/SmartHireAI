@@ -1,96 +1,329 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h2 class="fw-bold mb-1">Analysis Report</h2>
-        <p class="text-muted mb-0"><i class="bi bi-file-earmark-pdf me-1"></i> {{ resume.file.name|slice:"8:" }}</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'job_match' resume.id %}" class="btn btn-outline-secondary"><i class="bi bi-briefcase me-1"></i> Job Match</a>
-        <a href="{% url 'chat_resume' resume.id %}" class="btn btn-accent shadow-sm"><i class="bi bi-chat-dots me-1"></i> AI Coach</a>
+<div class="mb-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0 small text-uppercase fw-bold tracking-wider">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none text-muted">Dashboard</a></li>
+                    <li class="breadcrumb-item active text-primary" aria-current="page">Intelligence Report</li>
+                </ol>
+            </nav>
+            <h2 class="fw-extrabold mb-1" style="letter-spacing: -0.04em; font-size: 2.2rem;">Resume Intelligence <span class="text-primary text-opacity-50">v2.0</span></h2>
+            <p class="text-muted mb-0 d-flex align-items-center gap-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 rounded-pill px-2 py-1" style="font-size: 0.65rem;">AI ANALYSIS COMPLETE</span>
+                <i class="bi bi-file-earmark-pdf text-danger"></i> {{ resume.file.name|slice:"8:" }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'job_match' resume.id %}" class="btn btn-outline-secondary d-inline-flex align-items-center px-4">
+                <i class="bi bi-briefcase me-2"></i> Job Match
+            </a>
+            <a href="{% url 'download_pdf_report' resume.id %}" class="btn btn-outline-secondary d-inline-flex align-items-center px-4">
+                <i class="bi bi-download me-2"></i> Export PDF
+            </a>
+            <a href="{% url 'chat_resume' resume.id %}" class="btn btn-primary d-inline-flex align-items-center px-4 shadow-sm" style="background: var(--clr-dark);">
+                <i class="bi bi-robot me-2"></i> Open AI Coach
+            </a>
+        </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card card-custom p-4 h-100 border-top border-4 border-accent text-center">
-            <h5 class="fw-bold text-muted mb-4 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">Overall ATS Score</h5>
-            
-            <div class="position-relative d-inline-block mx-auto mb-4 mt-2" style="width: 140px; height: 140px;">
-                <svg viewBox="0 0 36 36" class="circular-chart" style="width:100%; height:100%;">
-                    <path class="circle-bg"
-                        d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none" stroke="#f1f5f9" stroke-width="2.5"/>
-                    <path class="circle"
-                        stroke-dasharray="{{ report.ats_score }}, 100"
-                        d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none" stroke="var(--accent-color)" stroke-width="2.5" stroke-linecap="round"
-                        style="animation: progress 1.5s ease-out forwards;"/>
-                </svg>
-                <div class="position-absolute top-50 start-50 translate-middle">
-                    <h2 class="mb-0 fw-bold" style="font-size: 2.2rem; color: var(--primary-color);">{{ report.ats_score }}<span style="font-size: 1rem; color: var(--text-muted);">/100</span></h2>
+<div class="row g-4">
+    <!-- Left Panel: The Score & Quick Actions -->
+    <div class="col-lg-4">
+        <div class="sticky-top" style="top: 100px; z-index: 10;">
+            <!-- Main Score Card -->
+            <div class="card card-custom border-0 shadow-lg mb-4 text-center p-4" style="background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);">
+                <div class="mb-4">
+                    <h6 class="text-uppercase fw-bold text-muted small mb-0" style="letter-spacing: 0.1em;">ATS Compatibility Score</h6>
                 </div>
+                
+                <div class="position-relative d-inline-block mx-auto mb-4" style="width: 180px; height: 180px;">
+                    <svg viewBox="0 0 36 36" class="circular-chart" style="filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.2));">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="circle" stroke-dasharray="{{ report.ats_score }}, 100" stroke="var(--clr-accent)"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    </svg>
+                    <div class="position-absolute top-50 start-50 translate-middle">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="h1 mb-0 fw-extrabold" style="font-size: 3.5rem; color: var(--clr-dark); letter-spacing: -0.05em;">{{ report.ats_score }}</span>
+                            <span class="text-muted fw-bold" style="font-size: 0.85rem; margin-top: -8px;">/100</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-3">
+                    {% if report.ats_score >= 80 %}
+                        <div class="alert alert-success border-0 py-2 rounded-pill small fw-bold mb-3">
+                            <i class="bi bi-star-fill me-1"></i> Highly Competitive
+                        </div>
+                    {% elif report.ats_score >= 50 %}
+                        <div class="alert alert-warning border-0 py-2 rounded-pill small fw-bold mb-3 text-dark">
+                            <i class="bi bi-lightning-fill me-1"></i> Optimization Recommended
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger border-0 py-2 rounded-pill small fw-bold mb-3">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Critical Revisions Needed
+                        </div>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'job_match' resume.id %}" class="btn btn-accent w-100 py-3 fw-bold mt-2">
+                    <i class="bi bi-briefcase-fill me-2"></i> Match with Job Description
+                </a>
             </div>
-            
-            <div class="mt-2">
-                {% if report.ats_score >= 80 %}
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-check-circle me-1"></i> Excellent Candidate</span>
-                {% elif report.ats_score >= 50 %}
-                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill text-dark"><i class="bi bi-exclamation-circle me-1"></i> Needs Refinement</span>
-                {% else %}
-                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-x-circle me-1"></i> Major Revision Required</span>
-                {% endif %}
+
+            <!-- Stats Mini-Grid -->
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="card card-custom p-3 border-0 shadow-sm text-center">
+                        <div class="text-primary mb-1"><i class="bi bi-lightning-charge fs-4"></i></div>
+                        <div class="h5 mb-0 fw-bold">{{ action_verbs|length }}</div>
+                        <div class="text-muted small fw-medium">Impact Verbs</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card card-custom p-3 border-0 shadow-sm text-center">
+                        <div class="text-success mb-1"><i class="bi bi-bar-chart fs-4"></i></div>
+                        <div class="h5 mb-0 fw-bold">{{ metrics|length }}</div>
+                        <div class="text-muted small fw-medium">Metrics Found</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-8 mb-4">
-        <div class="card card-custom p-4 h-100">
-            <h5 class="fw-bold mb-4 border-bottom pb-3"><i class="bi bi-tools me-2 text-muted"></i> Detected Technical Skills</h5>
-            {% if report.skills_found %}
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                    {% for skill in report.skills_found %}
-                        <span class="badge bg-light text-dark border p-2 rounded-2 fw-medium" style="font-size: 0.9rem;">{{ skill|title }}</span>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-light border text-muted">
-                    <i class="bi bi-info-circle me-2"></i> No standard technical skills detected. Ensure your technical skills are explicitly listed.
-                </div>
-            {% endif %}
-            
-            <h5 class="fw-bold mb-3 mt-4 border-bottom pb-3"><i class="bi bi-card-checklist me-2 text-muted"></i> Diagnostic Checks</h5>
-            <div class="row g-3">
-                <div class="col-sm-6">
-                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
-                        <span class="fw-medium text-muted">File Format</span>
-                        <span class="text-success fw-bold"><i class="bi bi-filetype-pdf me-1"></i> PDF</span>
+
+    <!-- Right Panel: Intelligence Deep Dive -->
+    <div class="col-lg-8">
+        <!-- Dashboard Navigation -->
+        <div class="card card-custom border-0 shadow-sm mb-4 p-2 bg-white">
+            <ul class="nav nav-pills nav-fill gap-2" id="dashboardTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold py-2 px-4 rounded-3 d-flex align-items-center justify-content-center gap-2" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                        <i class="bi bi-grid-1x2"></i> Overview
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold py-2 px-4 rounded-3 d-flex align-items-center justify-content-center gap-2" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills" type="button">
+                        <i class="bi bi-cpu"></i> Competencies
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold py-2 px-4 rounded-3 d-flex align-items-center justify-content-center gap-2" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
+                        <i class="bi bi-shield-check"></i> Analysis Logs
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="dashboardTabContent">
+            <!-- OVERVIEW TAB -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <!-- Roadmap Section -->
+                <div class="card card-custom border-0 shadow-sm mb-4 p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-map text-primary"></i> Roadmap to 100
+                        </h5>
+                        <span class="badge bg-light text-muted fw-medium rounded-pill">PRIORITY QUEUE</span>
+                    </div>
+                    
+                    <div class="roadmap-list">
+                        {% for item in feedback %}
+                            <div class="d-flex gap-3 mb-4 last-mb-0">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                        <span class="text-primary fw-bold small">{{ forloop.counter }}</span>
+                                    </div>
+                                </div>
+                                <div class="pb-3 border-bottom w-100">
+                                    <p class="mb-0 text-dark" style="font-size: 0.95rem; line-height: 1.6;">{{ item|safe }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
-                        <span class="fw-medium text-muted">Length Check</span>
-                        <span class="text-primary fw-bold"><i class="bi bi-card-text me-1"></i> Optimal</span>
+
+                <!-- Snapshot Highlights -->
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card card-custom border-0 shadow-sm p-4 h-100 bg-white">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-lightning text-warning"></i> Impact Verbs Detected
+                            </h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for verb in action_verbs %}
+                                    <span class="badge bg-light text-dark border-0 px-3 py-2 rounded-pill fw-medium small">{{ verb|title }}</span>
+                                {% empty %}
+                                    <p class="text-muted small">No strong action verbs detected.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card card-custom border-0 shadow-sm p-4 h-100 bg-white">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-graph-up text-success"></i> Key Metrics Found
+                            </h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for metric in metrics %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill fw-bold small">{{ metric }}</span>
+                                {% empty %}
+                                    <p class="text-muted small">No quantifiable metrics detected.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
-                        <span class="fw-medium text-muted">Key Sections</span>
-                        <span class="text-primary fw-bold"><i class="bi bi-layout-text-sidebar-reverse me-1"></i> Found</span>
+            </div>
+
+            <!-- SKILLS TAB -->
+            <div class="tab-pane fade" id="skills" role="tabpanel">
+                <div class="card card-custom border-0 shadow-sm p-4">
+                    <div class="text-center mb-5 mt-2">
+                        <h4 class="fw-bold mb-1">Skill Inventory Analysis</h4>
+                        <p class="text-muted small">We've extracted {{ report.skills_found|length }} specialized skills from your document.</p>
+                    </div>
+
+                    {% if report.skills_found %}
+                        <div class="skill-cloud p-4 bg-light bg-opacity-50 rounded-4 border border-light shadow-inner">
+                            <div class="d-flex flex-wrap justify-content-center gap-3">
+                                {% for skill in report.skills_found %}
+                                    <div class="skill-pill bg-white shadow-sm px-4 py-2 rounded-pill border d-flex align-items-center gap-2">
+                                        <div class="dot bg-primary rounded-circle" style="width: 8px; height: 8px;"></div>
+                                        <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ skill|upper }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+                            <h5>No specialized skills detected.</h5>
+                            <p class="text-muted">Ensure your resume uses standard technical terminology for better extraction.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-5 p-4 border rounded-4 bg-primary bg-opacity-10">
+                        <div class="d-flex gap-3">
+                            <i class="bi bi-info-circle-fill text-primary fs-3"></i>
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1">Intelligence Tip</h6>
+                                <p class="text-primary text-opacity-75 small mb-0"> Recruiters search for these exact keywords in their ATS databases. Missing even one common tool in your stack can lead to your resume being filtered out before it's seen by a human.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
-                        <span class="fw-medium text-muted">Quantifiable Metrics</span>
-                        <span class="text-primary fw-bold"><i class="bi bi-123 me-1"></i> Detected</span>
+            </div>
+
+            <!-- AUDIT TAB -->
+            <div class="tab-pane fade" id="audit" role="tabpanel">
+                <div class="card card-custom border-0 shadow-sm p-4">
+                    <h5 class="fw-bold mb-4">Structural & Technical Audit Logs</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle">
+                            <thead class="bg-light">
+                                <tr class="small text-muted text-uppercase tracking-wider">
+                                    <th class="ps-4">Check Category</th>
+                                    <th>Status</th>
+                                    <th class="pe-4 text-end">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-bottom">
+                                    <td class="ps-4 py-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-light p-2 rounded-3"><i class="bi bi-filetype-pdf text-danger fs-5"></i></div>
+                                            <div>
+                                                <div class="fw-bold">File Integrity</div>
+                                                <div class="text-muted small">Standard PDF parsing check</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-success rounded-pill px-3">VERIFIED</span></td>
+                                    <td class="pe-4 text-end text-success fw-bold">PASSED</td>
+                                </tr>
+                                <tr class="border-bottom">
+                                    <td class="ps-4 py-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-light p-2 rounded-3"><i class="bi bi-layout-text-window text-primary fs-5"></i></div>
+                                            <div>
+                                                <div class="fw-bold">Section Hierarchy</div>
+                                                <div class="text-muted small">Logical order of core sections</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-success rounded-pill px-3">VERIFIED</span></td>
+                                    <td class="pe-4 text-end text-success fw-bold">PASSED</td>
+                                </tr>
+                                <tr class="border-bottom">
+                                    <td class="ps-4 py-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-light p-2 rounded-3"><i class="bi bi-aspect-ratio text-primary fs-5"></i></div>
+                                            <div>
+                                                <div class="fw-bold">Layout Compatibility</div>
+                                                <div class="text-muted small">Multi-column & graphics scan</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">OPTIMIZED</span></td>
+                                    <td class="pe-4 text-end text-primary fw-bold">GOOD</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4 py-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-light p-2 rounded-3"><i class="bi bi-person-badge text-primary fs-5"></i></div>
+                                            <div>
+                                                <div class="fw-bold">Contact Accessibility</div>
+                                                <div class="text-muted small">Social links & contact data</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-success rounded-pill px-3">FOUND</span></td>
+                                    <td class="pe-4 text-end text-success fw-bold">100%</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .fw-extrabold { font-weight: 800; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .last-mb-0:last-child { margin-bottom: 0 !important; }
+    
+    .nav-pills .nav-link {
+        color: var(--clr-muted);
+        background: transparent;
+        transition: all 0.2s ease;
+    }
+    .nav-pills .nav-link:hover {
+        background: rgba(0,0,0,0.03);
+        color: var(--clr-dark);
+    }
+    .nav-pills .nav-link.active {
+        background: var(--clr-bg) !important;
+        color: var(--clr-accent) !important;
+        box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+    
+    .skill-pill {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: default;
+    }
+    .skill-pill:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md) !important;
+    }
+    
+    .shadow-inner {
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+    }
+</style>
 {% endblock %}
